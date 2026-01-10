@@ -56,15 +56,13 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         if (isMuted) return;
 
         const audio = audioMap[type];
-        if (audio) {
+        if (audio && audio.src) {
             audio.currentTime = 0;
             audio.play().catch(e => {
-                // Ignore autoplay errors or missing file errors in dev
-                console.log(`[Sound] Playing ${type}`);
+                console.warn(`[Sound] Error playing ${type}:`, e.message);
             });
-        } else {
-            console.log(`[Sound] Simulate ${type}`);
         }
+        console.log(`[Sound Action] ${type}`);
     }, [isMuted, audioMap]);
 
     const toggleMute = () => setIsMuted(prev => !prev);

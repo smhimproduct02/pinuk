@@ -31,19 +31,23 @@ export default function AdminPage() {
         insomniac: 0
     });
 
+    useEffect(() => {
+        const savedId = localStorage.getItem("werewolf_game_id");
+        if (savedId) setGameId(savedId);
+
+        const isAdmin = localStorage.getItem("werewolf_admin_auth");
+        if (isAdmin === "true") setIsAuthenticated(true);
+    }, []);
+
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
         if (password === "068538") {
             setIsAuthenticated(true);
+            localStorage.setItem("werewolf_admin_auth", "true");
         } else {
             setErrorInput("Invalid password");
         }
     };
-
-    useEffect(() => {
-        const savedId = localStorage.getItem("werewolf_game_id");
-        if (savedId) setGameId(savedId);
-    }, []);
 
     const createGame = async () => {
         setIsCreating(true);
@@ -145,8 +149,20 @@ export default function AdminPage() {
                 <div className="max-w-md mx-auto flex items-center justify-between">
                     <h1 className="text-xl font-bold tracking-tight">{t('admin_panel')}</h1>
                     <div className="flex items-center space-x-2">
-                        {game.phase === 'night' && <Moon className="w-4 h-4 text-indigo-400" />}
-                        {game.phase === 'day' && <div className="w-2 h-2 rounded-full bg-orange-400 animate-pulse"></div>}
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-xs text-zinc-500 hover:text-red-400"
+                            onClick={() => {
+                                if (confirm("Logout Admin?")) {
+                                    localStorage.removeItem("werewolf_admin_auth");
+                                    setIsAuthenticated(false);
+                                }
+                            }}
+                        >
+                            Logout
+                        </Button>
+                        <div className="h-4 w-[1px] bg-zinc-800"></div>
                         <span className={`px-2 py-0.5 rounded-full text-xs border uppercase font-bold tracking-wider ${game.status === 'waiting' ? 'border-green-500/50 text-green-400 bg-green-500/10' : 'border-zinc-500 text-zinc-400'}`}>
                             {game.status}
                         </span>
@@ -171,8 +187,27 @@ export default function AdminPage() {
 
                 {/* Players List */}
                 <div className="space-y-3">
-                    <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-500 flex items-center gap-2">
-                        <Users className="w-4 h-4" /> {t('players')} ({players.length})
+                    <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-500 flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                            <Users className="w-4 h-4" /> {t('players')} ({players.length})
+                        </div>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-[10px] text-zinc-600 hover:text-orange-400 h-6 px-2"
+                            onClick={async () => {
+                                if (confirm("Clear all players and reset game?")) {
+                                    await fetch("/api/admin/reset", {
+                                        method: "POST",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({ gameId: game.id, hardReset: true }),
+                                    });
+                                    mutate();
+                                }
+                            }}
+                        >
+                            Reset All
+                        </Button>
                     </h2>
 
                     <div className="grid gap-2 max-h-[300px] overflow-y-auto custom-scrollbar">

@@ -5,23 +5,28 @@ import { eq } from "drizzle-orm";
 
 export async function POST(request: Request) {
     try {
-        const { gameId } = await request.json();
+        const { gameId, hardReset } = await request.json();
 
         if (!gameId) {
             return NextResponse.json({ error: "Missing gameId" }, { status: 400 });
         }
 
-        // Reset Players
-        await db
-            .update(players)
-            .set({
-                role: null,
-                initialRole: null,
-                isAlive: true,
-                actionTarget: null,
-                actionTargetSecondary: null
-            })
-            .where(eq(players.gameId, gameId));
+        if (hardReset) {
+            // Hard Reset: Delete all players for this game
+            await db.delete(players).where(eq(players.gameId, gameId));
+        } else {
+            // Reset Players status but keep them in lobby
+            await db
+                .update(players)
+                .set({
+                    role: null,
+                    initialRole: null,
+                    isAlive: true,
+                    actionTarget: null,
+                    actionTargetSecondary: null
+                })
+                .where(eq(players.gameId, gameId));
+        }
 
         // Reset Game
         await db

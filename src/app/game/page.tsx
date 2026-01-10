@@ -19,6 +19,7 @@ export default function GamePage() {
     const [selectedTargets, setSelectedTargets] = useState<string[]>([]);
     const [hasActed, setHasActed] = useState(false);
     const [revealedInfo, setRevealedInfo] = useState<string | null>(null);
+    const [showInitialRole, setShowInitialRole] = useState(true);
 
     // Track previous phase to trigger sounds
     const prevPhaseRef = useRef<string | null>(null);
@@ -41,7 +42,10 @@ export default function GamePage() {
         if (data?.game?.phase) {
             const currentPhase = data.game.phase;
             if (prevPhaseRef.current !== currentPhase) {
-                if (currentPhase === "night") playSound("night_start");
+                if (currentPhase === "night") {
+                    playSound("night_start");
+                    setShowInitialRole(true); // Reset for new night
+                }
                 if (currentPhase === "day") playSound("day_start");
                 if (data.game.status === "finished") {
                     // Check win
@@ -226,7 +230,33 @@ export default function GamePage() {
             const wolves = players.filter((p: any) => p.role === "werewolf" && p.id !== myPlayer.id);
 
             return (
-                <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-4 text-center">
+                <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-4 text-center relative overflow-hidden">
+                    {/* INITIAL ROLE REVEAL OVERLAY (PASSIVE) */}
+                    {showInitialRole && (
+                        <div className="fixed inset-0 z-[60] bg-black flex flex-col items-center justify-center p-6 animate-in fade-in duration-500">
+                            <Moon className="w-12 h-12 text-indigo-500 mb-8 animate-pulse" />
+                            <h2 className="text-xl font-bold text-zinc-400 uppercase tracking-widest mb-12">Your Secret Role</h2>
+
+                            <div className="perspective-1000 group cursor-pointer" onClick={() => setShowInitialRole(false)}>
+                                <div className="relative w-64 h-96 transition-all duration-1000 transform-style-3d hover:rotate-y-180">
+                                    <div className="absolute inset-0 w-full h-full bg-zinc-800 rounded-2xl border-4 border-zinc-700 shadow-2xl flex flex-col items-center justify-center backface-hidden">
+                                        <Shuffle className="w-16 h-16 text-zinc-500" />
+                                        <p className="mt-8 text-zinc-500 font-bold tracking-tighter text-lg">TAP TO REVEAL</p>
+                                    </div>
+                                    <div className="absolute inset-0 w-full h-full bg-zinc-900 rounded-2xl border-4 border-white shadow-2xl flex flex-col items-center justify-center rotate-y-180 backface-hidden p-6 text-center">
+                                        <h3 className="text-4xl font-black text-white uppercase tracking-tighter mb-4">{myRole}</h3>
+                                        <div className="w-24 h-24 bg-zinc-700 rounded-full flex items-center justify-center mb-6">
+                                            <Moon className="w-12 h-12 text-white" />
+                                        </div>
+                                        <Button className="mt-4 bg-zinc-800 hover:bg-zinc-700 text-white border-white/10" onClick={(e) => { e.stopPropagation(); setShowInitialRole(false); }}>
+                                            Continue
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     <Moon className="w-16 h-16 text-indigo-400 mb-4 animate-pulse" />
                     <h1 className="text-2xl font-bold text-zinc-200">{t('night_phase')}</h1>
                     <p className="text-zinc-500 mt-2 mb-8">
@@ -280,7 +310,38 @@ export default function GamePage() {
         }
 
         return (
-            <div className="min-h-screen bg-zinc-950 p-4 pb-24">
+            <div className="min-h-screen bg-zinc-950 p-4 pb-24 relative overflow-hidden">
+                {/* INITIAL ROLE REVEAL OVERLAY */}
+                {showInitialRole && (
+                    <div className="fixed inset-0 z-[60] bg-black flex flex-col items-center justify-center p-6 animate-in fade-in duration-500">
+                        <Moon className="w-12 h-12 text-indigo-500 mb-8 animate-pulse" />
+                        <h2 className="text-xl font-bold text-zinc-400 uppercase tracking-widest mb-12">Your Secret Role</h2>
+
+                        <div className="perspective-1000 group cursor-pointer" onClick={() => setShowInitialRole(false)}>
+                            <div className="relative w-64 h-96 transition-all duration-1000 transform-style-3d hover:rotate-y-180">
+                                {/* Front (Card Back) */}
+                                <div className="absolute inset-0 w-full h-full bg-indigo-900 rounded-2xl border-4 border-indigo-500 shadow-2xl flex flex-col items-center justify-center backface-hidden">
+                                    <div className="w-32 h-32 rounded-full bg-indigo-800/50 flex items-center justify-center border border-indigo-400/30">
+                                        <Shuffle className="w-16 h-16 text-indigo-300" />
+                                    </div>
+                                    <p className="mt-8 text-indigo-300 font-bold tracking-tighter text-lg">TAP TO REVEAL</p>
+                                </div>
+
+                                {/* Back (The Role) */}
+                                <div className="absolute inset-0 w-full h-full bg-zinc-900 rounded-2xl border-4 border-white shadow-[0_0_50px_rgba(99,102,241,0.3)] flex flex-col items-center justify-center rotate-y-180 backface-hidden p-6 text-center">
+                                    <h3 className="text-4xl font-black text-white uppercase tracking-tighter mb-4">{myRole}</h3>
+                                    <div className="w-24 h-24 bg-indigo-600 rounded-full flex items-center justify-center mb-6 shadow-lg">
+                                        {myRole === "werewolf" ? <UserMinus className="w-12 h-12 text-white" /> : <Eye className="w-12 h-12 text-white" />}
+                                    </div>
+                                    <Button className="mt-4 bg-zinc-800 hover:bg-zinc-700 text-white border-white/10" onClick={(e) => { e.stopPropagation(); setShowInitialRole(false); }}>
+                                        Continue
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                        <p className="mt-12 text-zinc-600 text-sm font-medium animate-bounce">Click the card to flip</p>
+                    </div>
+                )}
                 <div className="flex justify-between items-center max-w-6xl mx-auto pt-2">
                     <Button variant="ghost" size="icon" onClick={toggleMute} className="text-zinc-500">
                         {isMuted ? <VolumeX /> : <Volume2 />}
