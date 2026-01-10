@@ -1,31 +1,34 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { games, players } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 
 export async function POST(request: Request) {
     try {
-        const { name } = await request.json();
+        const { name, roomCode } = await request.json();
 
         if (!name || typeof name !== "string") {
             return NextResponse.json({ error: "Name is required" }, { status: 400 });
         }
 
-        // Find the latest 'waiting' game
+        if (!roomCode || typeof roomCode !== "string") {
+            return NextResponse.json({ error: "Room Code is required" }, { status: 400 });
+        }
+
+        // Find the specific game by room code
         const activeGames = await db
             .select()
             .from(games)
-            .where(eq(games.status, "waiting"))
-            .orderBy(desc(games.createdAt))
+            .where(and(
+                eq(games.shortId, roomCode.toUpperCase()),
+                eq(games.status, "waiting")
+            ))
             .limit(1);
 
         let gameId;
 
         if (activeGames.length === 0) {
-            // Option A: Auto-create game on first join (simplest for MVP)
-            // Option B: Error and tell them to wait for admin.
-            // Let's go with Error for now as per "Admin starts game" flow.
-            return NextResponse.json({ error: "No active game found. Ask the host to open the lobby." }, { status: 404 });
+            return NextResponse.json({ error: "Invalid Room Code or game already started." }, { status: 404 });
         } else {
             gameId = activeGames[0].id;
         }

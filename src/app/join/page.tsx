@@ -14,13 +14,14 @@ import { useLanguage } from "@/contexts/LanguageContext";
 export default function JoinPage() {
     const { t } = useLanguage();
     const [name, setName] = useState("");
+    const [roomCode, setRoomCode] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
     const router = useRouter();
 
     const handleJoin = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!name.trim()) return;
+        if (!name.trim() || !roomCode.trim()) return;
 
         setIsLoading(true);
         setError("");
@@ -29,7 +30,7 @@ export default function JoinPage() {
             const res = await fetch("/api/join", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name }),
+                body: JSON.stringify({ name, roomCode }),
             });
 
             if (!res.ok) {
@@ -75,6 +76,18 @@ export default function JoinPage() {
                     <CardContent className="pt-6">
                         <form onSubmit={handleJoin} className="space-y-6">
                             <div className="space-y-3">
+                                <Label htmlFor="roomCode" className="uppercase text-xs font-bold tracking-widest text-zinc-500">Room Code</Label>
+                                <Input
+                                    id="roomCode"
+                                    placeholder="e.g. AB12XY"
+                                    value={roomCode}
+                                    onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+                                    className="bg-black/20 border-white/10 h-14 text-lg focus:ring-indigo-500/50 focus:border-indigo-500 transition-all rounded-xl uppercase tracking-widest text-center font-mono"
+                                    maxLength={6}
+                                />
+                            </div>
+
+                            <div className="space-y-3">
                                 <Label htmlFor="name" className="uppercase text-xs font-bold tracking-widest text-zinc-500">{t('display_name')}</Label>
                                 <Input
                                     id="name"
@@ -82,7 +95,6 @@ export default function JoinPage() {
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
                                     className="bg-black/20 border-white/10 h-14 text-lg focus:ring-indigo-500/50 focus:border-indigo-500 transition-all rounded-xl"
-                                    autoFocus
                                     maxLength={12}
                                 />
                                 <p className="text-xs text-zinc-500 text-right">{name.length}/12</p>

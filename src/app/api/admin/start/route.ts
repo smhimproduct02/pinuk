@@ -102,7 +102,12 @@ export async function POST(request: Request) {
         // 3. Update Game Status -> playing, Phase -> night
         await db
             .update(games)
-            .set({ status: "playing", phase: "night", winner: null })
+            .set({
+                status: "playing",
+                phase: "night",
+                winner: null,
+                phaseStartedAt: new Date()
+            })
             .where(eq(games.id, gameId));
 
         return NextResponse.json({ success: true, centerCount: centerRoles.length });

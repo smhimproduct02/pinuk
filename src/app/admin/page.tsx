@@ -17,6 +17,8 @@ export default function AdminPage() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [password, setPassword] = useState("");
     const [errorInput, setErrorInput] = useState("");
+    const [timeLeft, setTimeLeft] = useState(30);
+    const [showSessions, setShowSessions] = useState(false);
 
     // Role Config State
     const [roleConfig, setRoleConfig] = useState({
@@ -70,6 +72,37 @@ export default function AdminPage() {
         fetcher,
         { refreshInterval: 2000 }
     );
+
+    const { data: sessionsData, mutate: mutateSessions } = useSWR(
+        isAuthenticated ? "/api/admin/sessions" : null,
+        fetcher,
+        { refreshInterval: 10000 }
+    );
+
+    // Timer Logic (Synced with GamePage)
+    useEffect(() => {
+        if (!data?.game?.phaseStartedAt || data.game.status !== "playing") return;
+
+        const interval = setInterval(() => {
+            const start = new Date(data.game.phaseStartedAt).getTime();
+            const now = new Date().getTime();
+            const diff = Math.floor((now - start) / 1000);
+            const remaining = Math.max(0, 30 - diff);
+            setTimeLeft(remaining);
+
+            // AUTO ADVANCE
+            if (remaining === 0) {
+                const nextPhase = data.game.phase === "night" ? "day" : "night";
+                fetch("/api/admin/phase", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ gameId, nextPhase }),
+                }).then(() => mutate());
+            }
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [data?.game?.phaseStartedAt, data?.game?.status, data?.game?.phase, gameId, mutate]);
 
     // Helper logic for config
     const players = data?.players || [];
@@ -172,18 +205,38 @@ export default function AdminPage() {
 
             <main className="flex-1 p-4 max-w-md mx-auto w-full space-y-6">
 
-                {/* Game ID / Share Section */}
-                <Card className="bg-zinc-900/40 border-zinc-800">
-                    <CardContent className="p-4 flex items-center justify-between">
-                        <div className="space-y-1">
-                            <p className="text-xs text-zinc-500 tracking-widest uppercase">{t('game_id')}</p>
-                            <code className="text-lg font-mono text-indigo-400 select-all font-bold">{game.id.slice(0, 8)}...</code>
+                {/* Room Code / Share Section */}
+                <div className="flex gap-2">
+                    <Card className="bg-indigo-900/20 border-indigo-500/30 flex-1">
+                        <CardContent className="p-4 flex items-center justify-between">
+                            <div className="space-y-1">
+                                <p className="text-[10px] text-indigo-400 tracking-widest uppercase font-black">Room Code</p>
+                                <code className="text-3xl font-mono text-white select-all font-black">{game.shortId}</code>
+                            </div>
+                            <div className="flex gap-2">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-indigo-400 hover:text-white"
+                                    onClick={() => window.open(`/tv/${gameId}`, "_blank")}
+                                    title="Open TV Broadcast View"
+                                >
+                                    <Timer className="w-5 h-5" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="text-indigo-400 hover:text-white" onClick={() => navigator.clipboard.writeText(game.shortId)}>
+                                    <Copy className="w-5 h-5" />
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {game.status === "playing" && (
+                        <div className={`w-20 rounded-xl border flex flex-col items-center justify-center ${timeLeft < 10 ? 'bg-red-900/30 border-red-500 text-red-500 animate-pulse' : 'bg-zinc-900 border-zinc-800 text-zinc-400'}`}>
+                            <span className="text-2xl font-black leading-none">{timeLeft}</span>
+                            <span className="text-[8px] font-bold uppercase tracking-tighter">Timer</span>
                         </div>
-                        <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white" onClick={() => navigator.clipboard.writeText(game.id)}>
-                            <Copy className="w-4 h-4" />
-                        </Button>
-                    </CardContent>
-                </Card>
+                    )}
+                </div>
 
                 {/* Players List */}
                 <div className="space-y-3">
@@ -289,6 +342,65 @@ export default function AdminPage() {
                         </CardContent>
                     </Card>
                 )}
+
+                {/* Session Manager (List all Rooms) */}
+                <div className="pt-6 border-t border-zinc-900">
+                    <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-500">Active Game Rooms</h2>
+                        <Button variant="ghost" size="sm" className="text-[10px]" onClick={() => setShowSessions(!showSessions)}>
+                            {showSessions ? 'Hide' : 'Show All'}
+                        </Button>
+                    </div>
+
+                    {showSessions && (
+                        <div className="space-y-2">
+                            {sessionsData?.sessions?.map((session: any) => (
+                                <div key={session.id} className={`p-3 rounded-lg border flex items-center justify-between ${session.id === gameId ? 'bg-indigo-900/20 border-indigo-500/50' : 'bg-zinc-900/50 border-white/5'}`}>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded bg-zinc-800 flex flex-col items-center justify-center font-mono font-bold leading-tight">
+                                            <span className="text-[10px] text-zinc-500 uppercase">Code</span>
+                                            <span className="text-white">{session.shortId}</span>
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="text-xs font-bold text-zinc-300">{session.status.toUpperCase()}</span>
+                                            <span className="text-[10px] text-zinc-500">{session.playerCount} Players • {session.phase}</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-1">
+                                        {session.id !== gameId && (
+                                            <Button
+                                                variant="ghost"
+                                                className="h-8 text-[10px] text-zinc-500 hover:text-white"
+                                                onClick={() => {
+                                                    setGameId(session.id);
+                                                    localStorage.setItem("werewolf_game_id", session.id);
+                                                }}
+                                            >
+                                                Switch
+                                            </Button>
+                                        )}
+                                        <Button
+                                            variant="ghost"
+                                            className="h-8 text-[10px] text-zinc-600 hover:text-red-400"
+                                            onClick={async () => {
+                                                if (confirm(`Terminate Room ${session.shortId}?`)) {
+                                                    await fetch("/api/admin/sessions", {
+                                                        method: "DELETE",
+                                                        headers: { "Content-Type": "application/json" },
+                                                        body: JSON.stringify({ gameId: session.id })
+                                                    });
+                                                    mutateSessions();
+                                                }
+                                            }}
+                                        >
+                                            End
+                                        </Button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
             </main>
 
             {/* Footer Action */}

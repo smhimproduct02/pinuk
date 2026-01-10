@@ -2,12 +2,14 @@ import { pgTable, serial, text, boolean, timestamp, uuid } from "drizzle-orm/pg-
 
 export const games = pgTable("games", {
     id: uuid("id").defaultRandom().primaryKey(),
+    shortId: text("short_id").notNull(), // Room Code
     status: text("status", { enum: ["waiting", "playing", "finished"] })
         .notNull()
         .default("waiting"),
     phase: text("phase", { enum: ["lobby", "night", "day", "ended"] })
         .default("lobby"),
     winner: text("winner", { enum: ["villager", "werewolf", "tanner"] }), // New Field
+    phaseStartedAt: timestamp("phase_started_at").defaultNow(),
     createdAt: timestamp("created_at").defaultNow(),
 });
 

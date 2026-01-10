@@ -20,6 +20,8 @@ export default function GamePage() {
     const [hasActed, setHasActed] = useState(false);
     const [revealedInfo, setRevealedInfo] = useState<string | null>(null);
     const [showInitialRole, setShowInitialRole] = useState(true);
+    const [timeLeft, setTimeLeft] = useState(30);
+    const [showMenu, setShowMenu] = useState(false);
 
     // Track previous phase to trigger sounds
     const prevPhaseRef = useRef<string | null>(null);
@@ -57,7 +59,34 @@ export default function GamePage() {
         }
     }, [data?.game?.phase, data?.game?.status, playSound]);
 
+    // Timer Logic
+    useEffect(() => {
+        if (!data?.game?.phaseStartedAt || game.status !== "playing") return;
 
+        const interval = setInterval(() => {
+            const start = new Date(data.game.phaseStartedAt).getTime();
+            const now = new Date().getTime();
+            const diff = Math.floor((now - start) / 1000);
+            const remaining = Math.max(0, 30 - diff);
+            setTimeLeft(remaining);
+
+            // Auto-advance logic (Admin only? Or if host)
+            // Actually simplest if the first player who hits 0 triggers it? 
+            // Better to let Admin handle it or have a dedicated CRON, but for MVP:
+            // If host hits 0, trigger phase advance.
+            if (remaining === 0 && myPlayer?.isHost) {
+                // Auto Advance (Day -> Night or Night -> Day)
+                const nextPhase = game.phase === "night" ? "day" : "night";
+                fetch("/api/admin/phase", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ gameId, nextPhase }),
+                }).then(() => mutate());
+            }
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [data?.game?.phaseStartedAt, game?.status, myPlayer?.isHost, gameId, game?.phase, mutate]);
     if (error) return <div>Error loading game</div>;
     if (!data) return <div className="text-center p-10">Loading...</div>;
 
@@ -342,11 +371,71 @@ export default function GamePage() {
                         <p className="mt-12 text-zinc-600 text-sm font-medium animate-bounce">Click the card to flip</p>
                     </div>
                 )}
-                <div className="flex justify-between items-center max-w-6xl mx-auto pt-2">
+                )}
+
+                {/* HEADER / TIMER / ROOM CODE */}
+                <div className="flex justify-between items-center max-w-6xl mx-auto pt-2 relative z-20">
+                    <div className="flex items-center gap-4">
+                        <Button variant="ghost" size="icon" onClick={() => setShowMenu(!showMenu)} className="text-zinc-500">
+                            <HelpCircle className="w-6 h-6" />
+                        </Button>
+                        <div className="flex flex-col">
+                            <span className="text-[10px] text-zinc-500 uppercase font-black tracking-widest leading-none">Code</span>
+                            <span className="text-xl font-mono font-black text-indigo-400 leading-none">{game.shortId}</span>
+                        </div>
+                    </div>
+
+                    <div className={`flex flex-col items-center justify-center w-16 h-16 rounded-full border-4 transition-all duration-500 ${timeLeft < 10 ? 'border-red-500 text-red-500 animate-pulse' : 'border-indigo-500/30 text-indigo-400'}`}>
+                        <span className="text-2xl font-black">{timeLeft}</span>
+                        <span className="text-[8px] uppercase font-bold tracking-tighter -mt-1">SEC</span>
+                    </div>
+
                     <Button variant="ghost" size="icon" onClick={toggleMute} className="text-zinc-500">
                         {isMuted ? <VolumeX /> : <Volume2 />}
                     </Button>
                 </div>
+
+                {/* NON-VOTER LIST (Real-time Transparency) */}
+                <div className="max-w-6xl mx-auto mt-6 px-2">
+                    {players.filter((p: any) => !p.actionTarget && p.isAlive).length > 0 && (
+                        <div className="bg-zinc-900/40 border border-white/5 p-3 rounded-2xl flex items-center gap-3 overflow-x-auto custom-scrollbar">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-600 whitespace-nowrap">Waiting for:</span>
+                            <div className="flex gap-2">
+                                {players.filter((p: any) => !p.actionTarget && p.isAlive).map((p: any) => (
+                                    <span key={p.id} className="text-xs font-bold text-zinc-400 bg-zinc-800/80 px-3 py-1.5 rounded-full border border-white/5 whitespace-nowrap">
+                                        {p.name}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* PLAYER MENU OVERLAY */}
+                {showMenu && (
+                    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-md flex items-start justify-start p-4 animate-in slide-in-from-left duration-300">
+                        <Card className="w-64 bg-zinc-900 border-zinc-800 shadow-2xl">
+                            <CardContent className="p-0">
+                                <div className="p-6 border-b border-zinc-800">
+                                    <h3 className="text-sm font-black uppercase tracking-widest text-zinc-500 mb-4">Player Menu</h3>
+                                    <div className="space-y-1">
+                                        <p className="text-xs text-zinc-600 uppercase font-bold tracking-tighter leading-none">Your Role</p>
+                                        <p className="text-lg font-black text-white uppercase">{myRole}</p>
+                                    </div>
+                                </div>
+                                <div className="p-2 space-y-1">
+                                    <Button variant="ghost" className="w-full justify-start text-zinc-400 hover:text-white hover:bg-zinc-800" onClick={() => setShowMenu(false)}>
+                                        Resume Game
+                                    </Button>
+                                    <Button variant="ghost" className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-900/20" onClick={() => router.push("/")}>
+                                        Exit to Menu
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+                        <div className="flex-1 h-full" onClick={() => setShowMenu(false)}></div>
+                    </div>
+                )}
 
                 <div className="text-center mb-8 mt-4">
                     <Moon className="w-10 h-10 mx-auto text-indigo-500 mb-2" />
@@ -476,12 +565,70 @@ export default function GamePage() {
     // 2. DAY VIEW (Voting)
     if (isDay) {
         return (
-            <div className="min-h-screen bg-zinc-100 dark:bg-zinc-900 p-4 pb-24 text-zinc-900 dark:text-zinc-50">
-                <div className="flex justify-between items-center max-w-6xl mx-auto pt-2 mb-4">
-                    <Button variant="ghost" size="icon" onClick={toggleMute} className="text-zinc-400">
+            <div className="min-h-screen bg-zinc-950 p-4 pb-24 text-zinc-50 relative overflow-hidden">
+                {/* HEADER / TIMER / ROOM CODE */}
+                <div className="flex justify-between items-center max-w-6xl mx-auto pt-2 relative z-20">
+                    <div className="flex items-center gap-4">
+                        <Button variant="ghost" size="icon" onClick={() => setShowMenu(!showMenu)} className="text-zinc-500">
+                            <HelpCircle className="w-6 h-6" />
+                        </Button>
+                        <div className="flex flex-col">
+                            <span className="text-[10px] text-zinc-500 uppercase font-black tracking-widest leading-none">Code</span>
+                            <span className="text-xl font-mono font-black text-indigo-400 leading-none">{game.shortId}</span>
+                        </div>
+                    </div>
+
+                    <div className={`flex flex-col items-center justify-center w-16 h-16 rounded-full border-4 transition-all duration-500 ${timeLeft < 10 ? 'border-red-500 text-red-500 animate-pulse' : 'border-indigo-500/30 text-indigo-400'}`}>
+                        <span className="text-2xl font-black">{timeLeft}</span>
+                        <span className="text-[8px] uppercase font-bold tracking-tighter -mt-1">SEC</span>
+                    </div>
+
+                    <Button variant="ghost" size="icon" onClick={toggleMute} className="text-zinc-500">
                         {isMuted ? <VolumeX /> : <Volume2 />}
                     </Button>
                 </div>
+
+                {/* NON-VOTER LIST */}
+                <div className="max-w-6xl mx-auto mt-6 px-2">
+                    {players.filter((p: any) => !p.actionTarget && p.isAlive).length > 0 && (
+                        <div className="bg-zinc-900/40 border border-white/5 p-3 rounded-2xl flex items-center gap-3 overflow-x-auto custom-scrollbar">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-600 whitespace-nowrap">Waiting for:</span>
+                            <div className="flex gap-2">
+                                {players.filter((p: any) => !p.actionTarget && p.isAlive).map((p: any) => (
+                                    <span key={p.id} className="text-xs font-bold text-zinc-400 bg-zinc-800/80 px-3 py-1.5 rounded-full border border-white/5 whitespace-nowrap">
+                                        {p.name}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* PLAYER MENU */}
+                {showMenu && (
+                    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-md flex items-start justify-start p-4 animate-in slide-in-from-left duration-300">
+                        <Card className="w-64 bg-zinc-900 border-zinc-800 shadow-2xl">
+                            <CardContent className="p-0">
+                                <div className="p-6 border-b border-zinc-800">
+                                    <h3 className="text-sm font-black uppercase tracking-widest text-zinc-500 mb-4">Player Menu</h3>
+                                    <div className="space-y-1">
+                                        <p className="text-xs text-zinc-600 uppercase font-bold tracking-tighter leading-none">Your Role</p>
+                                        <p className="text-lg font-black text-white uppercase">{myRole}</p>
+                                    </div>
+                                </div>
+                                <div className="p-2 space-y-1">
+                                    <Button variant="ghost" className="w-full justify-start text-zinc-400 hover:text-white hover:bg-zinc-800" onClick={() => setShowMenu(false)}>
+                                        Resume Game
+                                    </Button>
+                                    <Button variant="ghost" className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-900/20" onClick={() => router.push("/")}>
+                                        Exit to Menu
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+                        <div className="flex-1 h-full" onClick={() => setShowMenu(false)}></div>
+                    </div>
+                )}
 
                 <div className="text-center mb-8">
                     <Sun className="w-12 h-12 mx-auto text-orange-400 mb-2 animate-spin-slow" />

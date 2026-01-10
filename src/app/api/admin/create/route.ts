@@ -3,20 +3,26 @@ import { db } from "@/db";
 import { games, players } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
+function generateRoomCode() {
+    return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
+
 export async function POST(request: Request) {
     try {
-        // Optional: Check if admin is authenticated (skipping for MVP as per request)
+        const shortId = generateRoomCode();
         // Create new game
         const [newGame] = await db
             .insert(games)
             .values({
+                shortId,
                 status: "waiting",
             })
             .returning();
 
         return NextResponse.json({
             success: true,
-            gameId: newGame.id
+            gameId: newGame.id,
+            roomCode: newGame.shortId
         });
 
     } catch (error) {

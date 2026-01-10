@@ -174,7 +174,10 @@ export async function POST(request: Request) {
         // Update Phase
         await db
             .update(games)
-            .set({ phase: nextPhase })
+            .set({
+                phase: nextPhase,
+                phaseStartedAt: new Date()
+            })
             .where(eq(games.id, gameId));
 
         return NextResponse.json({ success: true });
