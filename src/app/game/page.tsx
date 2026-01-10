@@ -20,7 +20,7 @@ export default function GamePage() {
     const [hasActed, setHasActed] = useState(false);
     const [revealedInfo, setRevealedInfo] = useState<string | null>(null);
     const [showInitialRole, setShowInitialRole] = useState(true);
-    const [timeLeft, setTimeLeft] = useState(30);
+    const [timeLeft, setTimeLeft] = useState(60);
     const [showMenu, setShowMenu] = useState(false);
 
     // Track previous phase to trigger sounds
@@ -69,7 +69,7 @@ export default function GamePage() {
             const start = new Date(game.phaseStartedAt).getTime();
             const now = new Date().getTime();
             const diff = Math.floor((now - start) / 1000);
-            const remaining = Math.max(0, 30 - diff);
+            const remaining = Math.max(0, 60 - diff);
             setTimeLeft(remaining);
 
             if (remaining === 0 && myPlayer?.isHost) {
@@ -103,10 +103,10 @@ export default function GamePage() {
         return (
             <div className={`min-h-screen flex flex-col items-center justify-center p-10 text-center ${isWinner ? 'bg-green-950 text-green-200' : 'bg-red-950 text-red-200'} animate-in fade-in duration-1000`}>
                 <h1 className="text-5xl font-bold mb-4">{isWinner ? t('victory') : t('defeat')}</h1>
-                <p className="text-2xl mb-8 font-light tracking-wide">
-                    {game.winner === "villager" && "Village Wins!"}
-                    {game.winner === "werewolf" && "Werewolves Win!"}
-                    {game.winner === "tanner" && "The Tanner Wins!"}
+                <p className="text-xl opacity-70 mb-8">
+                    {game.winner === "villager" && t('win_villager')}
+                    {game.winner === "werewolf" && t('win_werewolf')}
+                    {game.winner === "tanner" && t('win_tanner')}
                 </p>
 
                 {/* Reveal Roles Grid */}
@@ -284,8 +284,8 @@ export default function GamePage() {
                     <h1 className="text-2xl font-bold text-zinc-200">{t('night_phase')}</h1>
                     <p className="text-zinc-500 mt-2 mb-8">
                         {myRole === "minion"
-                            ? "Use this info to help the wolves win!"
-                            : "Close your eyes and wait for morning."}
+                            ? t('help_wolves')
+                            : t('close_eyes')}
                     </p>
 
                     {myRole === "minion" && (
@@ -298,7 +298,7 @@ export default function GamePage() {
                                         <span className="text-xs mt-1 text-red-200">{w.name}</span>
                                     </div>
                                 ))}
-                                {wolves.length === 0 && <span className="text-zinc-500 text-sm">No wolves found.</span>}
+                                {wolves.length === 0 && <span className="text-zinc-500 text-sm">{t('no_wolves')}</span>}
                             </div>
                         </div>
                     )}
@@ -307,24 +307,24 @@ export default function GamePage() {
         }
 
         // Active Roles
-        let instructions = "Choose a player.";
+        let instructions = t('inst_default');
         if (myRole === "werewolf") instructions = t('choose_victim');
-        if (myRole === "seer") instructions = "View 1 Player OR 2 Center Cards.";
+        if (myRole === "seer") instructions = t('inst_seer');
         if (myRole === "robber") instructions = t('choose_steal');
         if (myRole === "troublemaker") instructions = t('choose_swap');
-        if (myRole === "drunk") instructions = "Choose a center card to swap with.";
-        if (myRole === "insomniac") instructions = "Wait to see your final role.";
+        if (myRole === "drunk") instructions = t('inst_drunk');
+        if (myRole === "insomniac") instructions = t('inst_insomniac');
 
         // Insomniac special button
         if (myRole === "insomniac") {
             return (
                 <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-4 text-center">
                     <Eye className="w-16 h-16 text-emerald-400 mb-4" />
-                    <h1 className="text-2xl font-bold text-zinc-200">Insomniac</h1>
-                    <p className="text-zinc-500 mt-2 mb-8">Check your role at the end of the night.</p>
+                    <h1 className="text-2xl font-bold text-zinc-200">{t('insomniac_role')}</h1>
+                    <p className="text-zinc-500 mt-2 mb-8">{t('check_end_night')}</p>
                     {!hasActed && (
                         <Button onClick={submitAction} className="bg-emerald-600 hover:bg-emerald-700 text-lg py-6 px-12">
-                            Wake Up & Check Role
+                            {t('wake_check')}
                         </Button>
                     )}
                     {hasActed && <div className="text-2xl font-bold text-white mt-4">{revealedInfo}</div>}
@@ -347,22 +347,25 @@ export default function GamePage() {
                                     <div className="w-32 h-32 rounded-full bg-indigo-800/50 flex items-center justify-center border border-indigo-400/30">
                                         <Shuffle className="w-16 h-16 text-indigo-300" />
                                     </div>
-                                    <p className="mt-8 text-indigo-300 font-bold tracking-tighter text-lg">TAP TO REVEAL</p>
+                                    <p className="mt-8 text-indigo-300 font-bold tracking-tighter text-lg">{t('tap_to_reveal')}</p>
                                 </div>
 
                                 {/* Back (The Role) */}
                                 <div className="absolute inset-0 w-full h-full bg-zinc-900 rounded-2xl border-4 border-white shadow-[0_0_50px_rgba(99,102,241,0.3)] flex flex-col items-center justify-center rotate-y-180 backface-hidden p-6 text-center">
                                     <h3 className="text-4xl font-black text-white uppercase tracking-tighter mb-4">{myRole}</h3>
+                                    <p className="text-zinc-300 text-sm font-medium mb-4 max-w-[200px] mx-auto leading-snug shadow-black drop-shadow-md">
+                                        {t(`desc_${myRole}` as any)}
+                                    </p>
                                     <div className="w-24 h-24 bg-indigo-600 rounded-full flex items-center justify-center mb-6 shadow-lg">
                                         {myRole === "werewolf" ? <UserMinus className="w-12 h-12 text-white" /> : <Eye className="w-12 h-12 text-white" />}
                                     </div>
                                     <Button className="mt-4 bg-zinc-800 hover:bg-zinc-700 text-white border-white/10" onClick={(e) => { e.stopPropagation(); setShowInitialRole(false); }}>
-                                        Continue
+                                        {t('continue')}
                                     </Button>
                                 </div>
                             </div>
                         </div>
-                        <p className="mt-12 text-zinc-600 text-sm font-medium animate-bounce">Click the card to flip</p>
+                        <p className="mt-12 text-zinc-600 text-sm font-medium animate-bounce">{t('click_to_flip')}</p>
                     </div>
                 )}
 
@@ -373,14 +376,14 @@ export default function GamePage() {
                             <HelpCircle className="w-6 h-6" />
                         </Button>
                         <div className="flex flex-col">
-                            <span className="text-[10px] text-zinc-500 uppercase font-black tracking-widest leading-none">Code</span>
+                            <span className="text-[10px] text-zinc-500 uppercase font-black tracking-widest leading-none">{t('game_id')}</span>
                             <span className="text-xl font-mono font-black text-indigo-400 leading-none">{game.shortId}</span>
                         </div>
                     </div>
 
                     <div className={`flex flex-col items-center justify-center w-16 h-16 rounded-full border-4 transition-all duration-500 ${timeLeft < 10 ? 'border-red-500 text-red-500 animate-pulse' : 'border-indigo-500/30 text-indigo-400'}`}>
                         <span className="text-2xl font-black">{timeLeft}</span>
-                        <span className="text-[8px] uppercase font-bold tracking-tighter -mt-1">SEC</span>
+                        <span className="text-[8px] uppercase font-bold tracking-tighter -mt-1">{t('seconds')}</span>
                     </div>
 
                     <Button variant="ghost" size="icon" onClick={toggleMute} className="text-zinc-500">
@@ -392,7 +395,7 @@ export default function GamePage() {
                 <div className="max-w-6xl mx-auto mt-6 px-2">
                     {players.filter((p: any) => !p.actionTarget && p.isAlive).length > 0 && (
                         <div className="bg-zinc-900/40 border border-white/5 p-3 rounded-2xl flex items-center gap-3 overflow-x-auto custom-scrollbar">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-600 whitespace-nowrap">Waiting for:</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-600 whitespace-nowrap">{t('waiting_for')}</span>
                             <div className="flex gap-2">
                                 {players.filter((p: any) => !p.actionTarget && p.isAlive).map((p: any) => (
                                     <span key={p.id} className="text-xs font-bold text-zinc-400 bg-zinc-800/80 px-3 py-1.5 rounded-full border border-white/5 whitespace-nowrap">
@@ -410,18 +413,18 @@ export default function GamePage() {
                         <Card className="w-64 bg-zinc-900 border-zinc-800 shadow-2xl">
                             <CardContent className="p-0">
                                 <div className="p-6 border-b border-zinc-800">
-                                    <h3 className="text-sm font-black uppercase tracking-widest text-zinc-500 mb-4">Player Menu</h3>
+                                    <h3 className="text-sm font-black uppercase tracking-widest text-zinc-500 mb-4">{t('player_menu')}</h3>
                                     <div className="space-y-1">
-                                        <p className="text-xs text-zinc-600 uppercase font-bold tracking-tighter leading-none">Your Role</p>
+                                        <p className="text-xs text-zinc-600 uppercase font-bold tracking-tighter leading-none">{t('your_role')}</p>
                                         <p className="text-lg font-black text-white uppercase">{myRole}</p>
                                     </div>
                                 </div>
                                 <div className="p-2 space-y-1">
                                     <Button variant="ghost" className="w-full justify-start text-zinc-400 hover:text-white hover:bg-zinc-800" onClick={() => setShowMenu(false)}>
-                                        Resume Game
+                                        {t('resume_game')}
                                     </Button>
                                     <Button variant="ghost" className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-900/20" onClick={() => router.push("/")}>
-                                        Exit to Menu
+                                        {t('exit_menu')}
                                     </Button>
                                 </div>
                             </CardContent>
@@ -453,11 +456,11 @@ export default function GamePage() {
                                 </span>
                                 <span className="font-semibold text-lg tracking-wide">{p.name}</span>
                                 {myRole === "werewolf" && p.role === "werewolf" && (
-                                    <span className="text-[10px] text-red-500 uppercase font-bold mt-1">Found Wolf</span>
+                                    <span className="text-[10px] text-red-500 uppercase font-bold mt-1">{t('found_wolf')}</span>
                                 )}
                                 {/* Minion sees wolves? Wait, Minion doesn't ACT, so Minion is in passive screen. Wolves see wolves? Yes. */}
                                 {myRole === "werewolf" && players.find((x: any) => x.id === p.id && x.role === "werewolf") && (
-                                    <span className="text-[10px] text-red-500 uppercase font-bold mt-1">(Teammate)</span>
+                                    <span className="text-[10px] text-red-500 uppercase font-bold mt-1">{t('teammate')}</span>
                                 )}
                             </Button>
                         ))}
@@ -468,7 +471,7 @@ export default function GamePage() {
                     <div className="max-w-xl mx-auto">
                         <div className="flex items-center justify-center gap-2 mb-4">
                             <div className="h-[1px] bg-zinc-800 flex-1"></div>
-                            <span className="text-xs uppercase text-zinc-600 font-bold tracking-widest">Center Cards</span>
+                            <span className="text-xs uppercase text-zinc-600 font-bold tracking-widest">{t('center_cards')}</span>
                             <div className="h-[1px] bg-zinc-800 flex-1"></div>
                         </div>
                         <div className="grid grid-cols-3 gap-4">

@@ -51,10 +51,10 @@ export default function LobbyPage() {
     if (!data) return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-zinc-950 text-zinc-50 space-y-4">
             <Loader2 className="w-10 h-10 animate-spin text-indigo-500" />
-            <p className="text-zinc-500 font-medium tracking-wide">ENTER THE VILLAGE...</p>
+            <p className="text-zinc-500 font-medium tracking-wide">{t('enter_village')}</p>
         </div>
     );
-    if (error || data.error) return <div className="p-4 text-center text-red-500 bg-zinc-950 min-h-screen pt-20">Game not found.</div>;
+    if (error || data.error) return <div className="p-4 text-center text-red-500 bg-zinc-950 min-h-screen pt-20">{t('game_not_found')}</div>;
 
     const { game, players } = data;
     const myId = typeof window !== 'undefined' ? localStorage.getItem("werewolf_player_id") : null;
@@ -62,8 +62,52 @@ export default function LobbyPage() {
     const isHost = me?.isHost;
 
     // Config Logic
-    const totalConfigured = Object.values(roleConfig).reduce((a, b) => a + b, 0);
     const playerCount = players.length;
+
+    // Auto-Config: Update roleConfig when playerCount changes
+    useEffect(() => {
+        if (isHost && playerCount > 0) {
+            const newConfig = { ...roleConfig };
+            // Reset
+            newConfig.werewolf = 0;
+            newConfig.villager = 0;
+            newConfig.seer = 1;
+            newConfig.robber = 1;
+            newConfig.troublemaker = 1;
+
+            // Basic balance logic (One Night Style)
+            if (playerCount <= 3) {
+                newConfig.werewolf = 1;
+                newConfig.seer = 1;
+                newConfig.robber = 1;
+                newConfig.troublemaker = 0; // Too chaotic for 3
+                // Remainder villagers
+                const current = 3; // ww+seer+robber
+                newConfig.villager = Math.max(0, playerCount - current);
+            } else {
+                newConfig.werewolf = 2;
+                // Standard: 2 WW, 1 Seer, 1 Robber, 1 TM
+                const current = 5;
+                newConfig.villager = Math.max(0, playerCount - current);
+            }
+            // Ensure exact match for validation
+            // Wait, logic in api/start implies we need only total match?
+            // Actually, let's force strict match to avoid confusion
+            // Recalculate diff to ensure exact count
+            const total = Object.values(newConfig).reduce((a: any, b: any) => a + b, 0);
+            if (total < playerCount) {
+                newConfig.villager += (playerCount - total);
+            } else if (total > playerCount) {
+                // Should not happen with above logic but safe guard
+                // Remove from villager first
+                newConfig.villager = Math.max(0, newConfig.villager - (total - playerCount));
+            }
+
+            setRoleConfig(newConfig);
+        }
+    }, [playerCount, isHost]);
+
+    const totalConfigured = Object.values(roleConfig).reduce((a, b) => a + b, 0);
     const isValidConfig = totalConfigured === playerCount;
 
     const updateConfig = (role: keyof typeof roleConfig, delta: number) => {
@@ -91,7 +135,7 @@ export default function LobbyPage() {
 
     const resetGame = async () => {
         if (!isHost) return;
-        if (confirm("Are you sure you want to reset the lobby?")) {
+        if (confirm(t('confirm_reset'))) {
             await fetch("/api/admin/reset", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -149,7 +193,7 @@ export default function LobbyPage() {
                                 {player.id === myId && <span className="text-xs text-indigo-400/50 italic mr-2">You</span>}
                             </div>
                         ))}
-                        {players.length === 0 && <div className="text-center text-zinc-600 py-8 italic">Waiting for players to join...</div>}
+                        {players.length === 0 && <div className="text-center text-zinc-600 py-8 italic">{t('waiting_players')}</div>}
                     </CardContent>
                 </Card>
 
@@ -170,7 +214,7 @@ export default function LobbyPage() {
                                         {t('assigned')}: <strong className="text-base">{totalConfigured}</strong>
                                         {!isValidConfig && (
                                             <span className="text-[10px] bg-red-500/10 px-2 py-0.5 rounded-full border border-red-500/20">
-                                                {playerCount - totalConfigured > 0 ? `+${playerCount - totalConfigured} needed` : `${totalConfigured - playerCount} too many`}
+                                                {playerCount - totalConfigured > 0 ? `+${playerCount - totalConfigured} ${t('needed')}` : `${totalConfigured - playerCount} ${t('too_many')}`}
                                             </span>
                                         )}
                                     </span>
@@ -218,7 +262,7 @@ export default function LobbyPage() {
                         {game.status === "finished" && (
                             <div className="text-center">
                                 <Button variant="ghost" className="text-zinc-500 hover:text-white hover:bg-white/5 transition-colors" onClick={resetGame}>
-                                    <RefreshCcw className="w-4 h-4 mr-2" /> Reset Lobby
+                                    <RefreshCcw className="w-4 h-4 mr-2" /> {t('reset_lobby')}
                                 </Button>
                             </div>
                         )}
@@ -230,7 +274,7 @@ export default function LobbyPage() {
                             <Loader2 className="w-12 h-12 text-indigo-400 animate-spin relative z-10" />
                         </div>
                         <h3 className="text-2xl font-bold text-white mb-2">{t('waiting_host')}</h3>
-                        <p className="text-zinc-400">The host is configuring the game...</p>
+                        <p className="text-zinc-400">{t('host_configuring')}</p>
                     </div>
                 )}
             </div>

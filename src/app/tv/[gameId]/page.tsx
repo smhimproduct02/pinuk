@@ -13,7 +13,7 @@ export default function TVPage() {
     const { t } = useLanguage();
     const params = useParams();
     const gameId = params?.gameId as string;
-    const [timeLeft, setTimeLeft] = useState(30);
+    const [timeLeft, setTimeLeft] = useState(60);
 
     const { data, error } = useSWR(
         gameId ? `/api/game?gameId=${gameId}` : null,
@@ -24,6 +24,12 @@ export default function TVPage() {
     const game = data?.game;
     const players = data?.players || [];
 
+    // Calculate Role Counts
+    const roleCounts = players.reduce((acc: any, p: any) => {
+        acc[p.role] = (acc[p.role] || 0) + 1;
+        return acc;
+    }, {});
+
     useEffect(() => {
         if (!game?.phaseStartedAt || game?.status !== "playing") return;
 
@@ -31,7 +37,7 @@ export default function TVPage() {
             const start = new Date(game.phaseStartedAt).getTime();
             const now = new Date().getTime();
             const diff = Math.floor((now - start) / 1000);
-            const remaining = Math.max(0, 30 - diff);
+            const remaining = Math.max(0, 60 - diff);
             setTimeLeft(remaining);
         }, 1000);
 
@@ -68,11 +74,11 @@ export default function TVPage() {
                     <Trophy className="w-64 h-64 text-yellow-500 mb-12 drop-shadow-[0_0_50px_rgba(234,179,8,0.5)] animate-bounce" />
                     <h1 className="text-[12rem] font-black uppercase tracking-tighter leading-none mb-4 bg-clip-text text-transparent bg-gradient-to-b from-white to-zinc-600">
                         {game.winner === "villager" && t('victory')}
-                        {game.winner === "werewolf" && "WEREWOLF WIN"}
-                        {game.winner === "tanner" && "TANNER WINS"}
+                        {game.winner === "werewolf" && t('win_werewolf')}
+                        {game.winner === "tanner" && t('win_tanner')}
                     </h1>
                     <p className="text-4xl font-bold text-indigo-400 tracking-[0.5em] uppercase mb-24">
-                        {game.winner === "villager" ? "Kampung Selamat" : "Kampung Musnah"}
+                        {game.winner === "villager" ? t('village_safe') : t('village_destroyed')}
                     </p>
                 </div>
 
@@ -143,7 +149,7 @@ export default function TVPage() {
                         <div className={`absolute inset-0 rounded-full border-[30px] opacity-20 ${isNight ? 'border-indigo-500' : 'border-orange-400'}`}></div>
                         <div
                             className={`absolute inset-0 rounded-full border-[30px] border-t-transparent transition-all duration-1000 ${isNight ? 'border-indigo-500' : 'border-orange-500'}`}
-                            style={{ transform: `rotate(${((30 - timeLeft) / 30) * 360}deg)` }}
+                            style={{ transform: `rotate(${((60 - timeLeft) / 60) * 360}deg)` }}
                         ></div>
 
                         {/* Center Counter */}
@@ -151,19 +157,38 @@ export default function TVPage() {
                             <span className={`text-[12rem] font-black tabular-nums tracking-tighter transition-colors duration-300 ${timeLeft <= 5 ? 'text-red-500 scale-110 animate-pulse' : (isNight ? 'text-white' : 'text-zinc-900')}`}>
                                 {timeLeft}
                             </span>
-                            <span className="text-3xl font-bold uppercase tracking-[0.5em] opacity-50">Seconds</span>
+                            <span className="text-3xl font-bold uppercase tracking-[0.5em] opacity-50">{t('seconds')}</span>
                         </div>
                     </div>
                 </div>
+
+                {/* Role Counts Dashboard */}
+                <div className={`flex-1 rounded-3xl p-6 backdrop-blur-md border ${isNight ? 'bg-zinc-900/50 border-white/10' : 'bg-white/50 border-black/5'}`}>
+                    <h3 className="text-2xl font-black uppercase tracking-widest mb-6 opacity-70 border-b pb-4 border-white/10">{t('role_distribution')}</h3>
+                    <div className="grid grid-cols-1 gap-3">
+                        {Object.entries(roleCounts).map(([role, count]: [string, any]) => (
+                            <div key={role} className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-8 h-8 rounded-full overflow-hidden border-2 ${isNight ? 'border-indigo-500/50' : 'border-orange-500/50'}`}>
+                                        <img src={`/assets/roles/${role}.png`} alt={role} className="w-full h-full object-cover scale-125" />
+                                    </div>
+                                    <span className="text-xl font-bold capitalize">{role}</span>
+                                </div>
+                                <span className={`text-2xl font-black ${isNight ? 'text-indigo-400' : 'text-orange-500'}`}>x{count}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+                {/* removed */}
 
                 {/* Right: Premium Player Grid */}
                 <div className="flex-1 grid grid-cols-4 gap-6 content-start">
                     {players.map((p: any) => (
                         <div key={p.id} className={`relative group h-64 rounded-[2rem] p-6 flex flex-col items-center justify-between transition-all duration-500 ${p.isAlive
-                                ? (isNight
-                                    ? 'bg-zinc-900 border border-white/10 shadow-2xl shadow-indigo-900/20'
-                                    : 'bg-white border border-zinc-200 shadow-xl shadow-zinc-200/50')
-                                : 'bg-red-950/30 border border-red-900/30 opacity-60 grayscale'
+                            ? (isNight
+                                ? 'bg-zinc-900 border border-white/10 shadow-2xl shadow-indigo-900/20'
+                                : 'bg-white border border-zinc-200 shadow-xl shadow-zinc-200/50')
+                            : 'bg-red-950/30 border border-red-900/30 opacity-60 grayscale'
                             }`}>
                             {/* Avatar / Role Icon */}
                             <div className="relative flex-1 w-full flex items-center justify-center">
@@ -192,10 +217,10 @@ export default function TVPage() {
                         </div>
                     ))}
                 </div>
-            </div>
+                {/* removed */}
 
-            {/* Styles for animation */}
-            <style jsx global>{`
+
+                <style jsx global>{`
                 @keyframes spin-slow {
                     from { transform: rotate(0deg); }
                     to { transform: rotate(360deg); }
@@ -204,6 +229,7 @@ export default function TVPage() {
                     animation: spin-slow 20s linear infinite;
                 }
             `}</style>
+            </div >
         </div>
     );
 }

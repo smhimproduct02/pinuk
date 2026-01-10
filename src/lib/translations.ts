@@ -43,7 +43,27 @@ export type TranslationKey =
     | 'desc_tanner'
     | 'desc_drunk'
     | 'desc_insomniac'
-    | 'revealed_info';
+    | 'revealed_info'
+    | 'win_werewolf'
+    | 'win_tanner'
+    | 'win_villager'
+    | 'village_safe'
+    | 'village_destroyed'
+    | 'help_wolves'
+    | 'close_eyes'
+    | 'enter_village'
+    | 'game_not_found'
+    | 'waiting_players'
+    | 'host_configuring'
+    | 'reset_lobby'
+    | 'confirm_reset'
+    | 'needed'
+    | 'too_many'
+    | 'role_distribution'
+    | 'seconds'
+    | 'waiting_for' | 'click_to_flip' | 'tap_to_reveal' | 'continue' | 'wake_check' | 'check_end_night'
+    | 'insomniac_role' | 'center_cards' | 'your_role' | 'player_menu' | 'resume_game' | 'exit_menu'
+    | 'found_wolf' | 'teammate' | 'no_wolves' | 'inst_default' | 'inst_seer' | 'inst_drunk' | 'inst_insomniac';
 
 export const translations: Record<Language, Record<TranslationKey, string>> = {
     en: {
@@ -89,51 +109,123 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
         desc_minion: 'Team Werewolf. See the wolves but they don\'t see you. Win if wolves win.',
         desc_tanner: 'Neutral. You hate your life. Your goal is to get eliminated.',
         desc_drunk: 'Team Village. You are so drunk. Swap your card with a center card blindly.',
-        desc_insomniac: 'Team Village. Wake up last to see if your role card has changed.'
+        desc_insomniac: 'Team Village. Wake up last to see if your role card has changed.',
+        win_werewolf: 'WEREWOLF WINS',
+        win_tanner: 'TANNER WINS',
+        win_villager: 'VILLAGE WINS',
+        village_safe: 'Village Saved',
+        village_destroyed: 'Village Destroyed',
+        help_wolves: 'Use this info to help the wolves win!',
+        close_eyes: 'Close your eyes and wait for morning.',
+        enter_village: 'ENTER THE VILLAGE...',
+        game_not_found: 'Game not found.',
+        waiting_players: 'Waiting for players to join...',
+        host_configuring: 'The host is configuring the game...',
+        reset_lobby: 'Reset Lobby',
+        confirm_reset: 'Are you sure you want to reset the lobby?',
+        needed: 'needed',
+        too_many: 'too many',
+        role_distribution: 'Role Distribution',
+        seconds: 'Seconds',
+        waiting_for: 'Waiting for:',
+        click_to_flip: 'Click card to flip',
+        tap_to_reveal: 'TAP TO REVEAL',
+        continue: 'Continue',
+        wake_check: 'Wake Up & Check Role',
+        check_end_night: 'Check your role at the end of the night.',
+        insomniac_role: 'Insomniac',
+        center_cards: 'Center Cards',
+        your_role: 'Your Role',
+        player_menu: 'Player Menu',
+        resume_game: 'Resume Game',
+        exit_menu: 'Exit to Menu',
+        found_wolf: 'Found Wolf',
+        teammate: '(Teammate)',
+        no_wolves: 'No wolves found.',
+        inst_default: 'Choose a player.',
+        inst_seer: 'View 1 Player OR 2 Center Cards.',
+        inst_drunk: 'Choose a center card to swap with.',
+        inst_insomniac: 'Wait to see your final role.'
     },
     ms: {
         app_title: 'Werewolf',
         join_btn: 'Masuk Game',
         admin_btn: 'Jadi Host',
         or: 'Atau',
-        join_title: 'Jom Masuk Kampung',
-        enter_name: 'Nama kau siapa?',
+        join_title: 'Moh Masuk Kampong',
+        enter_name: 'Bubuh nama mung',
         display_name: 'Nama',
         lobby_title: 'LOBI',
-        players: 'Orang Kampung',
-        host: 'TUKANG JAGABELIA',
+        players: 'Orang Kampong',
+        host: 'TOK PENGHULU',
         game_config: 'Setting Game',
-        total_players: 'Jumlah Orang',
-        assigned: 'Role Dah Set',
+        total_players: 'Jumloh Orang',
+        assigned: 'Doh Set Role',
         start_game: 'MULA GAME',
-        waiting_host: 'Tunggu Host Jap...',
+        waiting_host: 'Tunggu Host Lok',
         admin_panel: 'Panel Admin',
         game_id: 'KOD BILIK',
-        kick: 'Tendang',
-        next_phase: 'Fasa Seterusnya',
+        kick: 'Tebeng',
+        next_phase: 'Fasa Depang',
         victory: 'MENANG',
-        defeat: 'KALAH',
+        defeat: 'KALOH',
         back_home: 'Balik Asal',
-        you_died: 'KO DAH MATI',
-        night_phase: 'Malam',
+        you_died: 'MUNG DOH MAMPUS',
+        night_phase: 'Malang',
         day_phase: 'Siang',
-        choose_victim: 'Pilih siapa nak dibaham.',
-        choose_reveal: 'Pilih member nak check role dia.',
-        choose_steal: 'Pilih member nak curi role dia.',
-        choose_swap: 'Pilih DUA member untuk tukar role.',
+        choose_victim: 'Pilih sapa nok bahang.',
+        choose_reveal: 'Pilih member nok cek role dia.',
+        choose_steal: 'Pilih member nok curi role dia.',
+        choose_swap: 'Pilih DUA member nok tukar role.',
         vote_eliminate: 'Undi Buang',
-        vote_cast: 'Dah Undi',
-        confirm_action: 'Confirm Gerak',
-        action_submitted: 'Beres',
-        revealed_info: 'Rahsia Terbongkar',
-        desc_werewolf: 'Geng Serigala. Bangun malam cam member lain. Tipu orang kampung.',
-        desc_villager: 'Orang Kampung. Takde power apa pun. Cari serigala siang nanti.',
-        desc_seer: 'Geng Kampung. Boleh tengok 1 kad player ATAU 2 kad tengah.',
-        desc_robber: 'Geng Kampung. Tukar kad kau dengan orang lain, pastu tengok kad baru.',
-        desc_troublemaker: 'Geng Kampung. Tukar kad antara dua player lain. Diorang takkan tau.',
-        desc_minion: 'Geng Serigala. Kau nampak serigala, tapi diorang tak nampak kau.',
-        desc_tanner: 'Neutral. Kau fedup hidup. Menang kalau kau kena buang.',
-        desc_drunk: 'Geng Kampung. Mabuk ketum. Tukar kad kau dengan kad tengah buta-buta.',
-        desc_insomniac: 'Geng Kampung. Bangun last sekali check kad sendiri kot-kot berubah.'
+        vote_cast: 'Doh Undi',
+        confirm_action: 'Jadi Doh',
+        action_submitted: 'Beres Boh',
+        revealed_info: 'Pecoh Lubang',
+        desc_werewolf: 'Geng Serigala. Bangun malang macang member lain. Nipiu orang kampong.',
+        desc_villager: 'Orang Kampong. Dokdop power mende pun. Cari serigala siang nanti.',
+        desc_seer: 'Geng Kampong. Boleh tengok 1 kad player ATAU 2 kad tengoh.',
+        desc_robber: 'Geng Kampong. Tukar kad mung nge orang lain, pastu tengok kad baru.',
+        desc_troublemaker: 'Geng Kampong. Tukar kad antara dua player lain. Diorang dok tahu mende.',
+        desc_minion: 'Geng Serigala. Mung nampok serigala, tapi diorang dok nampok mung.',
+        desc_tanner: 'Neutral. Mung fedup hidup. Menang kalu mung kena buang.',
+        desc_drunk: 'Geng Kampong. Mabuk ketum. Tukar kad mung nge kad tengoh buta-buta.',
+        desc_insomniac: 'Geng Kampong. Bangun last sekali cek kad sendiri kot-kot berubah.',
+        win_werewolf: 'SERIGALA MENANG',
+        win_tanner: 'TANNER MENANG',
+        win_villager: 'KAMPONG MENANG',
+        village_safe: 'Kampong Selamak',
+        village_destroyed: 'Kampong Musnoh',
+        help_wolves: 'Pakai info ni buak tolong serigala menang!',
+        close_eyes: 'Pejang mata, tunggu siang.',
+        enter_village: 'MASUK KAMPONG...',
+        game_not_found: 'Game dok jumpo.',
+        waiting_players: 'Tunggu orang masok...',
+        host_configuring: 'Tok Penghulu duk setting game...',
+        reset_lobby: 'Reset Lobi',
+        confirm_reset: 'Mung confirm nok reset lobi?',
+        needed: 'nok lagi',
+        too_many: 'lebih doh',
+        role_distribution: 'Pecoh Katu',
+        seconds: 'Saat',
+        waiting_for: 'Tunggu:',
+        click_to_flip: 'Tekang kad tu',
+        tap_to_reveal: 'TEKANG BUKA',
+        continue: 'Jalang Terus',
+        wake_check: 'Bangung Tengok Role',
+        check_end_night: 'Tengok role mung masa abih malang.',
+        insomniac_role: 'Insomniac',
+        center_cards: 'Kad Tengoh',
+        your_role: 'Role Mung',
+        player_menu: 'Menu Player',
+        resume_game: 'Sambung Maing',
+        exit_menu: 'Keluor Menu',
+        found_wolf: 'Jumpa Serigala',
+        teammate: '(Geng Mung)',
+        no_wolves: 'Takdok serigala.',
+        inst_default: 'Pilih sorg player.',
+        inst_seer: 'Tengok 1 Player ATAU 2 Kad Tengoh.',
+        inst_drunk: 'Pilih kad tengoh nok tukor.',
+        inst_insomniac: 'Tunggu nok tengok role.'
     }
 };
