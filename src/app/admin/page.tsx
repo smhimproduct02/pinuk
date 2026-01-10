@@ -76,6 +76,14 @@ export default function AdminPage() {
     const game = data?.game;
     const players = data?.players || [];
 
+    // [FIX] Reset state if game is not found (e.g. deleted)
+    useEffect(() => {
+        if (data && !game) {
+            setGameId(null);
+            localStorage.removeItem("werewolf_game_id");
+        }
+    }, [data, game]);
+
     const { data: sessionsData, mutate: mutateSessions } = useSWR(
         isAuthenticated ? "/api/admin/sessions" : null,
         fetcher,
@@ -175,7 +183,8 @@ export default function AdminPage() {
     }
 
     if (error) return <div className="p-4 text-red-500 text-center mt-10">Failed to load game</div>;
-    if (!data) return <div className="flex items-center justify-center h-screen bg-zinc-950"><Loader2 className="w-10 h-10 animate-spin text-zinc-500" /></div>;
+    // Guard against missing game (prevents crash on deletion before effect runs)
+    if (!data || !game) return <div className="flex items-center justify-center h-screen bg-zinc-950"><Loader2 className="w-10 h-10 animate-spin text-zinc-500" /></div>;
 
     return (
         <div className="flex flex-col min-h-screen bg-zinc-950 text-zinc-50 pb-32 font-sans">
