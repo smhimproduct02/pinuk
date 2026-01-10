@@ -10,8 +10,10 @@ export async function GET() {
 
         // 2. Create Game
         const gameId = crypto.randomUUID();
+        const shortId = Math.random().toString(36).substring(2, 8).toUpperCase();
         await db.insert(games).values({
             id: gameId,
+            shortId,
             status: "waiting",
             phase: "lobby"
         });
