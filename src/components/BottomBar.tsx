@@ -21,7 +21,7 @@ export function BottomBar() {
 
     return (
         <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-zinc-800 bg-zinc-950/80 backdrop-blur-lg pb-safe">
-            <div className="flex items-center justify-around h-16">
+            <div className="flex items-center justify-around h-16 mb-2">
                 <Link
                     href="/lobby"
                     className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${isActive('/lobby') ? 'text-primary' : 'text-zinc-500'}`}

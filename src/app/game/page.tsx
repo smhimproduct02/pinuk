@@ -345,7 +345,7 @@ export default function GamePage() {
 
                 {/* Confirm Button */}
                 {!hasActed && (
-                    <div className="fixed bottom-24 left-0 right-0 px-4 flex justify-center">
+                    <div className="fixed bottom-0 left-0 right-0 px-4 flex justify-center mb-20 pb-safe">
                         <Button
                             className="w-full max-w-sm bg-indigo-500 hover:bg-indigo-600 font-bold py-6 text-lg"
                             disabled={selectedTargets.length === 0 && myRole !== "insomniac"} // Insomniac has no targets
@@ -459,7 +459,7 @@ export default function GamePage() {
                 </div>
 
                 {!hasActed && (
-                    <div className="fixed bottom-10 left-0 right-0 px-4 flex justify-center">
+                    <div className="fixed bottom-0 left-0 right-0 px-4 flex justify-center mb-20 pb-safe">
                         <Button
                             className="w-full max-w-sm bg-red-600 hover:bg-red-700 font-bold py-6 text-lg"
                             disabled={selectedTargets.length === 0}
@@ -470,7 +470,7 @@ export default function GamePage() {
                     </div>
                 )}
                 {hasActed && (
-                    <div className="fixed bottom-10 left-0 right-0 px-4 flex justify-center">
+                    <div className="fixed bottom-0 left-0 right-0 px-4 flex justify-center mb-20 pb-safe">
                         <span className="bg-zinc-800 text-zinc-400 px-6 py-3 rounded-full font-medium">
                             {t('vote_cast')}
                         </span>

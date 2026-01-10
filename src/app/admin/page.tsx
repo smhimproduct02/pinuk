@@ -257,7 +257,7 @@ export default function AdminPage() {
             </main>
 
             {/* Footer Action */}
-            <div className="fixed bottom-0 left-0 right-0 p-4 bg-zinc-950/90 border-t border-zinc-800 pb-8 backdrop-blur z-20">
+            <div className="fixed bottom-0 left-0 right-0 p-4 bg-zinc-950/90 border-t border-zinc-800 pb-safe backdrop-blur z-20 mb-16">
                 <div className="max-w-md mx-auto">
                     {game.status === 'waiting' ? (
                         <>
