@@ -5,7 +5,7 @@ import useSWR from "swr";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Loader2, Users, Play, Copy, Settings2, Plus, Minus, Moon } from "lucide-react";
+import { Loader2, Users, Play, Copy, Settings2, Plus, Minus, Moon, Timer } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
