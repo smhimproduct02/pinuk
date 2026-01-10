@@ -371,7 +371,6 @@ export default function GamePage() {
                         <p className="mt-12 text-zinc-600 text-sm font-medium animate-bounce">Click the card to flip</p>
                     </div>
                 )}
-                )}
 
                 {/* HEADER / TIMER / ROOM CODE */}
                 <div className="flex justify-between items-center max-w-6xl mx-auto pt-2 relative z-20">
