@@ -49,7 +49,6 @@ export default function TVPage() {
         </div>
     );
 
-    const { game, players } = data;
     const isNight = game.phase === "night";
     const isDay = game.phase === "day";
 

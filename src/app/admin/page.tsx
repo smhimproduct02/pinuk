@@ -108,8 +108,6 @@ export default function AdminPage() {
     }, [game?.phaseStartedAt, game?.status, game?.phase, gameId, mutate]);
 
     // Helper logic for config
-    const players = data?.players || [];
-    const game = data?.game;
     const totalConfigured = Object.values(roleConfig).reduce((a, b) => a + b, 0);
     const playerCount = players.length;
     // Validation: Total must be >= Player Count (excess = center cards)
