@@ -107,7 +107,7 @@ export default function TVPage() {
 
     // --- PLAYING ---
     return (
-        <div className={`min-h-screen flex flex-col p-16 transition-colors duration-1000 font-sans overflow-hidden relative ${isNight ? 'bg-black text-white' : 'bg-zinc-100 text-zinc-950'}`}>
+        <div className={`min-h-screen flex flex-col p-4 md:p-8 lg:p-16 transition-colors duration-1000 font-sans overflow-x-hidden relative ${isNight ? 'bg-black text-white' : 'bg-zinc-100 text-zinc-950'}`}>
 
             {/* Dynamic Background */}
             <div className={`absolute inset-0 transition-opacity duration-1000 ${isNight ? 'opacity-100' : 'opacity-0'}`}>
@@ -119,51 +119,51 @@ export default function TVPage() {
             </div>
 
             {/* Header: Status Bar */}
-            <div className="flex justify-between items-start z-10 mb-12">
+            <div className="flex flex-col md:flex-row justify-between items-start z-10 mb-8 md:mb-12 gap-4">
                 <div className="flex flex-col">
-                    <span className="text-2xl font-bold uppercase tracking-[0.2em] opacity-50 mb-2">{t('game_id')}</span>
-                    <span className={`text-[8rem] leading-none font-black font-mono tracking-tighter ${isNight ? 'text-white' : 'text-black'}`}>
+                    <span className="text-xl md:text-2xl font-bold uppercase tracking-[0.2em] opacity-50 mb-2">{t('game_id')}</span>
+                    <span className={`text-6xl md:text-[6rem] lg:text-[8rem] leading-none font-black font-mono tracking-tighter ${isNight ? 'text-white' : 'text-black'}`}>
                         {game.shortId}
                     </span>
                 </div>
 
-                <div className={`flex items-center gap-8 px-12 py-6 rounded-full border backdrop-blur-xl transition-all duration-500 ${isNight ? 'bg-zinc-900/50 border-white/10' : 'bg-white/50 border-black/5 shadow-xl'}`}>
+                <div className={`flex items-center gap-4 md:gap-8 px-6 md:px-12 py-3 md:py-6 rounded-full border backdrop-blur-xl transition-all duration-500 ${isNight ? 'bg-zinc-900/50 border-white/10' : 'bg-white/50 border-black/5 shadow-xl'}`}>
                     {isNight ? (
-                        <Moon className="w-16 h-16 text-indigo-400 animate-pulse" />
+                        <Moon className="w-10 h-10 md:w-16 md:h-16 text-indigo-400 animate-pulse" />
                     ) : (
-                        <Sun className="w-16 h-16 text-orange-500 animate-spin-slow" />
+                        <Sun className="w-10 h-10 md:w-16 md:h-16 text-orange-500 animate-spin-slow" />
                     )}
-                    <span className="text-6xl font-black uppercase tracking-tight">
+                    <span className="text-3xl md:text-6xl font-black uppercase tracking-tight">
                         {isNight ? t('night_phase') : t('day_phase')}
                     </span>
                 </div>
             </div>
 
             {/* Main Content: Timer & Grid */}
-            <div className="flex-1 flex gap-16 z-10">
+            <div className="flex-1 flex flex-col lg:flex-row gap-8 lg:gap-16 z-10">
 
                 {/* Left: Enhanced Timer */}
-                <div className="w-1/3 flex flex-col justify-center items-center">
-                    <div className="relative w-[500px] h-[500px]">
+                <div className="w-full lg:w-1/3 flex flex-col justify-center items-center order-1 lg:order-none">
+                    <div className="relative w-64 h-64 md:w-96 md:h-96 lg:w-[500px] lg:h-[500px]">
                         {/* Rings */}
-                        <div className={`absolute inset-0 rounded-full border-[30px] opacity-20 ${isNight ? 'border-indigo-500' : 'border-orange-400'}`}></div>
+                        <div className={`absolute inset-0 rounded-full border-[15px] md:border-[30px] opacity-20 ${isNight ? 'border-indigo-500' : 'border-orange-400'}`}></div>
                         <div
-                            className={`absolute inset-0 rounded-full border-[30px] border-t-transparent transition-all duration-1000 ${isNight ? 'border-indigo-500' : 'border-orange-500'}`}
+                            className={`absolute inset-0 rounded-full border-[15px] md:border-[30px] border-t-transparent transition-all duration-1000 ${isNight ? 'border-indigo-500' : 'border-orange-500'}`}
                             style={{ transform: `rotate(${((60 - timeLeft) / 60) * 360}deg)` }}
                         ></div>
 
                         {/* Center Counter */}
                         <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            <span className={`text-[12rem] font-black tabular-nums tracking-tighter transition-colors duration-300 ${timeLeft <= 5 ? 'text-red-500 scale-110 animate-pulse' : (isNight ? 'text-white' : 'text-zinc-900')}`}>
+                            <span className={`text-6xl md:text-8xl lg:text-[12rem] font-black tabular-nums tracking-tighter transition-colors duration-300 ${timeLeft <= 5 ? 'text-red-500 scale-110 animate-pulse' : (isNight ? 'text-white' : 'text-zinc-900')}`}>
                                 {timeLeft}
                             </span>
-                            <span className="text-3xl font-bold uppercase tracking-[0.5em] opacity-50">{t('seconds')}</span>
+                            <span className="text-xl md:text-3xl font-bold uppercase tracking-[0.5em] opacity-50">{t('seconds')}</span>
                         </div>
                     </div>
                 </div>
 
                 {/* Role Counts Dashboard */}
-                <div className={`flex-1 rounded-3xl p-6 backdrop-blur-md border ${isNight ? 'bg-zinc-900/50 border-white/10' : 'bg-white/50 border-black/5'}`}>
+                <div className={`w-full lg:flex-1 rounded-3xl p-6 backdrop-blur-md border order-2 ${isNight ? 'bg-zinc-900/50 border-white/10' : 'bg-white/50 border-black/5'}`}>
                     <h3 className="text-2xl font-black uppercase tracking-widest mb-6 opacity-70 border-b pb-4 border-white/10">{t('role_distribution')}</h3>
                     <div className="grid grid-cols-1 gap-3">
                         {Object.entries(roleCounts).map(([role, count]: [string, any]) => (
@@ -182,7 +182,7 @@ export default function TVPage() {
                 {/* removed */}
 
                 {/* Right: Premium Player Grid */}
-                <div className="flex-1 grid grid-cols-4 gap-6 content-start">
+                <div className="w-full lg:flex-1 grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 content-start order-3">
                     {players.map((p: any) => (
                         <div key={p.id} className={`relative group h-64 rounded-[2rem] p-6 flex flex-col items-center justify-between transition-all duration-500 ${p.isAlive
                             ? (isNight
