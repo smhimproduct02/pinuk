@@ -39,43 +39,40 @@ export default function GamePage() {
         { refreshInterval: 2000 }
     );
 
+    const game = data?.game;
+    const players = data?.players || [];
+    const myPlayer = players?.find((p: any) => p.id === playerId);
+
     // Audio Triggers
     useEffect(() => {
-        if (data?.game?.phase) {
-            const currentPhase = data.game.phase;
+        if (game?.phase) {
+            const currentPhase = game.phase;
             if (prevPhaseRef.current !== currentPhase) {
                 if (currentPhase === "night") {
                     playSound("night_start");
                     setShowInitialRole(true); // Reset for new night
                 }
                 if (currentPhase === "day") playSound("day_start");
-                if (data.game.status === "finished") {
-                    // Check win
-                    // Need to wait for render logic or just check data.game.winner
-                    if (data.game.winner) playSound(data.game.winner === "villager" ? "win" : "lose"); // Simplify
+                if (game.status === "finished") {
+                    if (game.winner) playSound(game.winner === "villager" ? "win" : "lose");
                 }
                 prevPhaseRef.current = currentPhase;
             }
         }
-    }, [data?.game?.phase, data?.game?.status, playSound]);
+    }, [game?.phase, game?.status, game?.winner, playSound]);
 
     // Timer Logic
     useEffect(() => {
-        if (!data?.game?.phaseStartedAt || game.status !== "playing") return;
+        if (!game?.phaseStartedAt || game.status !== "playing") return;
 
         const interval = setInterval(() => {
-            const start = new Date(data.game.phaseStartedAt).getTime();
+            const start = new Date(game.phaseStartedAt).getTime();
             const now = new Date().getTime();
             const diff = Math.floor((now - start) / 1000);
             const remaining = Math.max(0, 30 - diff);
             setTimeLeft(remaining);
 
-            // Auto-advance logic (Admin only? Or if host)
-            // Actually simplest if the first player who hits 0 triggers it? 
-            // Better to let Admin handle it or have a dedicated CRON, but for MVP:
-            // If host hits 0, trigger phase advance.
             if (remaining === 0 && myPlayer?.isHost) {
-                // Auto Advance (Day -> Night or Night -> Day)
                 const nextPhase = game.phase === "night" ? "day" : "night";
                 fetch("/api/admin/phase", {
                     method: "POST",
@@ -86,12 +83,9 @@ export default function GamePage() {
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [data?.game?.phaseStartedAt, game?.status, myPlayer?.isHost, gameId, game?.phase, mutate]);
+    }, [game?.phaseStartedAt, game?.status, game?.phase, myPlayer?.isHost, gameId, mutate]);
     if (error) return <div>Error loading game</div>;
     if (!data) return <div className="text-center p-10">Loading...</div>;
-
-    const { game, players } = data;
-    const myPlayer = players.find((p: any) => p.id === playerId);
 
     if (!myPlayer) return <div>Player not found</div>;
 

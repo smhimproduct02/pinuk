@@ -73,6 +73,9 @@ export default function AdminPage() {
         { refreshInterval: 2000 }
     );
 
+    const game = data?.game;
+    const players = data?.players || [];
+
     const { data: sessionsData, mutate: mutateSessions } = useSWR(
         isAuthenticated ? "/api/admin/sessions" : null,
         fetcher,
@@ -81,10 +84,10 @@ export default function AdminPage() {
 
     // Timer Logic (Synced with GamePage)
     useEffect(() => {
-        if (!data?.game?.phaseStartedAt || data.game.status !== "playing") return;
+        if (!game?.phaseStartedAt || game?.status !== "playing") return;
 
         const interval = setInterval(() => {
-            const start = new Date(data.game.phaseStartedAt).getTime();
+            const start = new Date(game.phaseStartedAt).getTime();
             const now = new Date().getTime();
             const diff = Math.floor((now - start) / 1000);
             const remaining = Math.max(0, 30 - diff);
@@ -92,7 +95,7 @@ export default function AdminPage() {
 
             // AUTO ADVANCE
             if (remaining === 0) {
-                const nextPhase = data.game.phase === "night" ? "day" : "night";
+                const nextPhase = game.phase === "night" ? "day" : "night";
                 fetch("/api/admin/phase", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -102,7 +105,7 @@ export default function AdminPage() {
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [data?.game?.phaseStartedAt, data?.game?.status, data?.game?.phase, gameId, mutate]);
+    }, [game?.phaseStartedAt, game?.status, game?.phase, gameId, mutate]);
 
     // Helper logic for config
     const players = data?.players || [];

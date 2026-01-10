@@ -19,11 +19,14 @@ export default function TVPage() {
         { refreshInterval: 2000 }
     );
 
+    const game = data?.game;
+    const players = data?.players || [];
+
     useEffect(() => {
-        if (!data?.game?.phaseStartedAt || data.game.status !== "playing") return;
+        if (!game?.phaseStartedAt || game?.status !== "playing") return;
 
         const interval = setInterval(() => {
-            const start = new Date(data.game.phaseStartedAt).getTime();
+            const start = new Date(game.phaseStartedAt).getTime();
             const now = new Date().getTime();
             const diff = Math.floor((now - start) / 1000);
             const remaining = Math.max(0, 30 - diff);
@@ -31,7 +34,7 @@ export default function TVPage() {
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [data?.game?.phaseStartedAt, data?.game?.status]);
+    }, [game?.phaseStartedAt, game?.status]);
 
     if (error) return (
         <div className="min-h-screen bg-black text-red-500 flex items-center justify-center text-5xl font-black">
