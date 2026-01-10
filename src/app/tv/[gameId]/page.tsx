@@ -5,10 +5,12 @@ import useSWR from "swr";
 import { useParams } from "next/navigation";
 import { Moon, Sun, Ghost, Timer, Users, Trophy } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function TVPage() {
+    const { t } = useLanguage();
     const params = useParams();
     const gameId = params?.gameId as string;
     const [timeLeft, setTimeLeft] = useState(30);
@@ -37,40 +39,59 @@ export default function TVPage() {
     }, [game?.phaseStartedAt, game?.status]);
 
     if (error) return (
-        <div className="min-h-screen bg-black text-red-500 flex items-center justify-center text-5xl font-black">
-            ERROR: GAME NOT FOUND
+        <div className="min-h-screen bg-black text-red-600 flex items-center justify-center text-5xl font-black uppercase tracking-widest">
+            {t('game_id')} NOT FOUND
         </div>
     );
 
     if (!data) return (
         <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center gap-8">
-            <Timer className="w-24 h-24 animate-spin text-indigo-500" />
-            <h1 className="text-6xl font-black tracking-tighter italic">CONNECTING TO VILLAGE...</h1>
+            <div className="relative">
+                <div className="absolute inset-0 bg-indigo-500 blur-xl opacity-20 animate-pulse"></div>
+                <Timer className="w-32 h-32 animate-spin-slow text-indigo-500 relative z-10" />
+            </div>
+            <h1 className="text-4xl font-black tracking-[1em] text-zinc-500 animate-pulse">LOADING...</h1>
         </div>
     );
 
     const isNight = game.phase === "night";
-    const isDay = game.phase === "day";
 
-    // GAME OVER VIEW
+    // --- GAME OVER ---
     if (game.status === "finished") {
         return (
-            <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center text-white p-20 overflow-hidden relative">
-                <div className="absolute inset-0 bg-indigo-600/10 blur-[200px] animate-pulse"></div>
+            <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center text-white p-20 overflow-hidden relative font-sans">
+                {/* Background FX */}
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-900/40 to-black z-0"></div>
+                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 z-0"></div>
 
-                <Trophy className="w-48 h-48 text-yellow-500 mb-8 animate-bounce" />
-                <h1 className="text-9xl font-black uppercase tracking-tighter mb-4 z-10">GAME OVER</h1>
-                <p className="text-6xl font-bold text-indigo-400 z-10 mb-16 italic">
-                    {game.winner === "villager" && "VILLAGE VICTORIOUS"}
-                    {game.winner === "werewolf" && "WEREWOLVES TRIUMPHANT"}
-                    {game.winner === "tanner" && "THE TANNER WON!"}
-                </p>
+                <div className="z-10 flex flex-col items-center animate-in zoom-in duration-700">
+                    <Trophy className="w-64 h-64 text-yellow-500 mb-12 drop-shadow-[0_0_50px_rgba(234,179,8,0.5)] animate-bounce" />
+                    <h1 className="text-[12rem] font-black uppercase tracking-tighter leading-none mb-4 bg-clip-text text-transparent bg-gradient-to-b from-white to-zinc-600">
+                        {game.winner === "villager" && t('victory')}
+                        {game.winner === "werewolf" && "WEREWOLF WIN"}
+                        {game.winner === "tanner" && "TANNER WINS"}
+                    </h1>
+                    <p className="text-4xl font-bold text-indigo-400 tracking-[0.5em] uppercase mb-24">
+                        {game.winner === "villager" ? "Kampung Selamat" : "Kampung Musnah"}
+                    </p>
+                </div>
 
-                <div className="grid grid-cols-4 gap-8 w-full max-w-7xl z-10">
+                <div className="grid grid-cols-4 gap-8 w-full max-w-[1600px] z-10">
                     {players.map((p: any) => (
-                        <div key={p.id} className="bg-zinc-900/80 border-4 border-white/10 p-6 rounded-3xl flex flex-col items-center gap-2">
-                            <span className="text-4xl font-black text-white">{p.name}</span>
-                            <span className="text-2xl font-bold uppercase text-indigo-500">{p.role}</span>
+                        <div key={p.id} className="relative group perspective-1000">
+                            <div className="relative bg-zinc-900/80 border border-white/10 p-8 rounded-[2rem] flex flex-col items-center gap-6 backdrop-blur-md transition-all duration-500 hover:scale-105 hover:bg-zinc-800 hover:border-indigo-500/50 hover:shadow-[0_0_40px_rgba(99,102,241,0.3)]">
+                                <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-indigo-500/30 shadow-2xl relative">
+                                    <img
+                                        src={`/assets/roles/${p.role}.png`}
+                                        alt={p.role}
+                                        className="w-full h-full object-cover scale-110"
+                                    />
+                                </div>
+                                <div className="text-center">
+                                    <span className="block text-3xl font-black text-white mb-2">{p.name}</span>
+                                    <span className="block text-xl font-bold uppercase tracking-widest text-indigo-400">{p.role}</span>
+                                </div>
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -78,63 +99,102 @@ export default function TVPage() {
         );
     }
 
+    // --- PLAYING ---
     return (
-        <div className={`min-h-screen flex flex-col p-12 transition-colors duration-1000 ${isNight ? 'bg-zinc-950 text-white' : 'bg-white text-zinc-950'}`}>
-            {/* Background Ambience */}
-            <div className={`fixed inset-0 pointer-events-none opacity-20 filter blur-[150px] transition-all duration-1000 ${isNight ? 'bg-indigo-900' : 'bg-orange-500'}`}></div>
+        <div className={`min-h-screen flex flex-col p-16 transition-colors duration-1000 font-sans overflow-hidden relative ${isNight ? 'bg-black text-white' : 'bg-zinc-100 text-zinc-950'}`}>
 
-            {/* Top Bar: Room Code & Status */}
-            <div className="flex justify-between items-start z-10 mb-20">
-                <div className="flex flex-col gap-2">
-                    <span className="text-3xl font-black uppercase tracking-widest opacity-50">Room Code</span>
-                    <span className={`text-9xl font-mono font-black ${isNight ? 'text-indigo-400' : 'text-indigo-600'}`}>
+            {/* Dynamic Background */}
+            <div className={`absolute inset-0 transition-opacity duration-1000 ${isNight ? 'opacity-100' : 'opacity-0'}`}>
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-indigo-900/30 via-black to-black"></div>
+                <div className="absolute inset-0 opacity-20 bg-[url('/assets/noise.svg')]"></div>
+            </div>
+            <div className={`absolute inset-0 transition-opacity duration-1000 ${isNight ? 'opacity-0' : 'opacity-100'}`}>
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-orange-100 via-zinc-100 to-zinc-200"></div>
+            </div>
+
+            {/* Header: Status Bar */}
+            <div className="flex justify-between items-start z-10 mb-12">
+                <div className="flex flex-col">
+                    <span className="text-2xl font-bold uppercase tracking-[0.2em] opacity-50 mb-2">{t('game_id')}</span>
+                    <span className={`text-[8rem] leading-none font-black font-mono tracking-tighter ${isNight ? 'text-white' : 'text-black'}`}>
                         {game.shortId}
                     </span>
                 </div>
 
-                <div className="flex flex-col items-end gap-4">
-                    <div className={`flex items-center gap-6 px-12 py-6 rounded-full border-8 ${isNight ? 'border-indigo-500/30' : 'border-indigo-600/30'}`}>
-                        {isNight ? <Moon className="w-16 h-16 text-indigo-400" /> : <Sun className="w-16 h-16 text-orange-500 animate-spin-slow" />}
-                        <span className="text-7xl font-black uppercase tracking-tighter">
-                            {isNight ? "Night Phase" : "Day Phase"}
-                        </span>
-                    </div>
+                <div className={`flex items-center gap-8 px-12 py-6 rounded-full border backdrop-blur-xl transition-all duration-500 ${isNight ? 'bg-zinc-900/50 border-white/10' : 'bg-white/50 border-black/5 shadow-xl'}`}>
+                    {isNight ? (
+                        <Moon className="w-16 h-16 text-indigo-400 animate-pulse" />
+                    ) : (
+                        <Sun className="w-16 h-16 text-orange-500 animate-spin-slow" />
+                    )}
+                    <span className="text-6xl font-black uppercase tracking-tight">
+                        {isNight ? t('night_phase') : t('day_phase')}
+                    </span>
                 </div>
             </div>
 
-            {/* Middle: Timer */}
-            <div className="flex-1 flex flex-col items-center justify-center z-10 mb-20">
-                <div className={`relative w-[600px] h-[600px] rounded-full flex items-center justify-center border-[20px] transition-all duration-500 ${timeLeft < 10 ? 'border-red-600 animate-pulse scale-110' : (isNight ? 'border-indigo-500/50' : 'border-zinc-200')}`}>
-                    <div className="flex flex-col items-center">
-                        <span className={`text-[250px] font-black leading-none ${timeLeft < 10 ? 'text-red-500' : ''}`}>
-                            {timeLeft}
-                        </span>
-                        <span className="text-5xl font-black uppercase tracking-widest opacity-50 -mt-10">Seconds</span>
+            {/* Main Content: Timer & Grid */}
+            <div className="flex-1 flex gap-16 z-10">
+
+                {/* Left: Enhanced Timer */}
+                <div className="w-1/3 flex flex-col justify-center items-center">
+                    <div className="relative w-[500px] h-[500px]">
+                        {/* Rings */}
+                        <div className={`absolute inset-0 rounded-full border-[30px] opacity-20 ${isNight ? 'border-indigo-500' : 'border-orange-400'}`}></div>
+                        <div
+                            className={`absolute inset-0 rounded-full border-[30px] border-t-transparent transition-all duration-1000 ${isNight ? 'border-indigo-500' : 'border-orange-500'}`}
+                            style={{ transform: `rotate(${((30 - timeLeft) / 30) * 360}deg)` }}
+                        ></div>
+
+                        {/* Center Counter */}
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                            <span className={`text-[12rem] font-black tabular-nums tracking-tighter transition-colors duration-300 ${timeLeft <= 5 ? 'text-red-500 scale-110 animate-pulse' : (isNight ? 'text-white' : 'text-zinc-900')}`}>
+                                {timeLeft}
+                            </span>
+                            <span className="text-3xl font-bold uppercase tracking-[0.5em] opacity-50">Seconds</span>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            {/* Bottom: Players Grid */}
-            <div className="z-10 bg-zinc-900/10 backdrop-blur-md rounded-[60px] p-12 border-8 border-white/5">
-                <div className="flex items-center gap-6 mb-10">
-                    <Users className="w-16 h-16 opacity-50" />
-                    <h2 className="text-5xl font-black uppercase tracking-widest opacity-50">Villagers ({players.length})</h2>
-                </div>
-
-                <div className="grid grid-cols-6 gap-8">
+                {/* Right: Premium Player Grid */}
+                <div className="flex-1 grid grid-cols-4 gap-6 content-start">
                     {players.map((p: any) => (
-                        <div key={p.id} className={`p-8 rounded-[40px] flex flex-col items-center justify-center gap-4 transition-all duration-500 ${p.isAlive ? (isNight ? 'bg-zinc-900 border-4 border-indigo-500/20' : 'bg-zinc-100 border-4 border-zinc-200') : 'opacity-30 bg-red-950/20 border-4 border-red-500/50'}`}>
-                            <div className={`w-24 h-24 rounded-full flex items-center justify-center text-4xl font-black shadow-2xl ${p.isAlive ? (isNight ? 'bg-indigo-600 text-white' : 'bg-indigo-500 text-white') : 'bg-red-900 text-zinc-400'}`}>
-                                {p.isAlive ? p.name.charAt(0).toUpperCase() : <Skull className="w-12 h-12" />}
+                        <div key={p.id} className={`relative group h-64 rounded-[2rem] p-6 flex flex-col items-center justify-between transition-all duration-500 ${p.isAlive
+                                ? (isNight
+                                    ? 'bg-zinc-900 border border-white/10 shadow-2xl shadow-indigo-900/20'
+                                    : 'bg-white border border-zinc-200 shadow-xl shadow-zinc-200/50')
+                                : 'bg-red-950/30 border border-red-900/30 opacity-60 grayscale'
+                            }`}>
+                            {/* Avatar / Role Icon */}
+                            <div className="relative flex-1 w-full flex items-center justify-center">
+                                {!p.isAlive ? (
+                                    <Skull className="w-24 h-24 text-red-500 opacity-80" />
+                                ) : (
+                                    <div className={`w-32 h-32 rounded-full overflow-hidden border-4 shadow-lg flex items-center justify-center text-4xl font-black ${isNight ? 'bg-indigo-600 border-indigo-400 text-white' : 'bg-orange-500 border-orange-300 text-white'}`}>
+                                        {p.name.charAt(0).toUpperCase()}
+                                    </div>
+                                )}
                             </div>
-                            <span className="text-4xl font-black truncate w-full text-center">{p.name}</span>
-                            {!p.isAlive && <span className="text-2xl font-bold uppercase tracking-widest text-red-500">Eliminated</span>}
+
+                            {/* Name Badge */}
+                            <div className={`w-full py-3 rounded-xl text-center backdrop-blur-md ${isNight ? 'bg-white/5' : 'bg-black/5'}`}>
+                                <span className={`text-2xl font-black truncate px-2 block ${isNight ? 'text-white' : 'text-zinc-900'}`}>
+                                    {p.name}
+                                </span>
+                            </div>
+
+                            {/* Elimination Overlay */}
+                            {!p.isAlive && (
+                                <div className="absolute top-4 right-4 bg-red-600 text-white text-xs font-black uppercase px-3 py-1 rounded-full tracking-widest">
+                                    Eliminated
+                                </div>
+                            )}
                         </div>
                     ))}
                 </div>
             </div>
 
-            {/* Custom Animations */}
+            {/* Styles for animation */}
             <style jsx global>{`
                 @keyframes spin-slow {
                     from { transform: rotate(0deg); }

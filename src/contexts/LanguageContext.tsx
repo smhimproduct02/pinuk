@@ -12,7 +12,7 @@ type LanguageContextType = {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-    const [language, setLanguage] = useState<Language>("en");
+    const [language, setLanguage] = useState<Language>("ms");
 
     useEffect(() => {
         const savedLang = localStorage.getItem("werewolf_lang") as Language;
