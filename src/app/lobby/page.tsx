@@ -30,6 +30,10 @@ export default function LobbyPage() {
 
     const router = useRouter();
 
+    // HOOKS MUST BE AT THE TOP - BEFORE ANY RETURNS
+    const [isMounted, setIsMounted] = useState(false);
+    const [myId, setMyId] = useState<string | null>(null);
+
     useEffect(() => {
         const savedId = localStorage.getItem("werewolf_game_id");
         if (!savedId) {
@@ -38,6 +42,14 @@ export default function LobbyPage() {
             setGameId(savedId);
         }
     }, [router]);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
+    useEffect(() => {
+        setMyId(localStorage.getItem("werewolf_player_id"));
+    }, []);
 
     const { data, error, mutate } = useSWR(
         gameId ? `/api/game?gameId=${gameId}` : null,
@@ -51,53 +63,20 @@ export default function LobbyPage() {
         }
     }, [data, router]);
 
-    if (!gameId) return null;
-    if (!data) return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-zinc-950 text-zinc-50 space-y-4">
-            <Loader2 className="w-10 h-10 animate-spin text-indigo-500" />
-            <p className="text-zinc-500 font-medium tracking-wide">{t('enter_village')}</p>
-        </div>
-    );
-    if (error || data.error) return <div className="p-4 text-center text-red-500 bg-zinc-950 min-h-screen pt-20">{t('game_not_found')}</div>;
-
     const game = data?.game;
-    // Guard: data exists but game might be missing (e.g. deleted or sync issue)
-    if (!game) return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-zinc-950 text-zinc-50 space-y-4">
-            <Loader2 className="w-10 h-10 animate-spin text-indigo-500" />
-            <p className="text-zinc-500 font-medium tracking-wide">Syncing...</p>
-        </div>
-    );
-
     const players = data?.players || [];
-
-    // [FIX] Hydration Safety: Fetch ID only on client side
-    const [myId, setMyId] = useState<string | null>(null);
-    useEffect(() => {
-        setMyId(localStorage.getItem("werewolf_player_id"));
-    }, []);
-
     const me = players.find((p: any) => p.id === myId);
     const isHost = me?.isHost;
-
-    // Config Logic
     const playerCount = players.length;
 
     // Auto-Config: Update roleConfig when playerCount changes
-    // Auto-Config: Update roleConfig when playerCount changes
     useEffect(() => {
         if (isHost && playerCount > 0) {
-            // Avoid infinite loop by checking if config already matches
-            // We only re-calc if total config != playerCount OR we want to rebalance on change
             const currentTotal = Object.values(roleConfig).reduce((a, b) => a + b, 0);
-            if (currentTotal === playerCount) return; // Already balanced, user might have customized it. Wait, if player count changes, we SHOULD rebalance.
-
-            // Actually, we should only auto-rebalance if the host hasn't manually touched it? 
-            // For now, let's just ensure it sums up correctly to prevent "Start" button lockout.
+            if (currentTotal === playerCount) return;
 
             setRoleConfig(prev => {
                 const newConfig = { ...prev };
-                // Reset roles for standard distribution
                 newConfig.werewolf = playerCount >= 15 ? 4 : (playerCount >= 8 ? 3 : 2);
                 newConfig.seer = 1;
                 newConfig.robber = 1;
@@ -107,24 +86,36 @@ export default function LobbyPage() {
                 newConfig.insomniac = playerCount >= 12 ? 1 : 0;
                 newConfig.tanner = playerCount >= 15 ? 1 : 0;
 
-                // Basics
                 const specials = newConfig.werewolf + newConfig.seer + newConfig.robber + newConfig.troublemaker + newConfig.minion + newConfig.drunk + newConfig.insomniac + newConfig.tanner;
                 const villagersNeeded = Math.max(0, playerCount - specials);
                 newConfig.villager = villagersNeeded;
 
-                // Final adjustment to match exact count (if negative villagers, reduce specials)
-                // This shouldn't happen with 30 players but for small games:
                 const total = specials + villagersNeeded;
                 if (total > playerCount) {
-                    // Too many specials, reduce Wolves first? No, reduce simpler ones.
-                    // For simplicity, just reset to all villagers if < 3?
-                    if (playerCount < 3) return prev; // Let them handle it
+                    if (playerCount < 3) return prev;
                 }
 
                 return newConfig;
             });
         }
     }, [playerCount, isHost]); // Removed roleConfig to prevent infinite loop
+
+    // NOW DO CONDITIONAL RETURNS AFTER ALL HOOKS
+    if (!isMounted) return null;
+    if (!gameId) return null;
+    if (!data) return (
+        <div className="flex flex-col items-center justify-center min-h-screen bg-zinc-950 text-zinc-50 space-y-4">
+            <Loader2 className="w-10 h-10 animate-spin text-indigo-500" />
+            <p className="text-zinc-500 font-medium tracking-wide">{t('enter_village')}</p>
+        </div>
+    );
+    if (error || data.error) return <div className="p-4 text-center text-red-500 bg-zinc-950 min-h-screen pt-20">{t('game_not_found')}</div>;
+    if (!game) return (
+        <div className="flex flex-col items-center justify-center min-h-screen bg-zinc-950 text-zinc-50 space-y-4">
+            <Loader2 className="w-10 h-10 animate-spin text-indigo-500" />
+            <p className="text-zinc-500 font-medium tracking-wide">Syncing...</p>
+        </div>
+    );
 
     const totalConfigured = Object.values(roleConfig).reduce((a, b) => a + b, 0);
     const isValidConfig = totalConfigured === playerCount;
@@ -151,11 +142,6 @@ export default function LobbyPage() {
             setIsLoadingStart(false);
         }
     };
-
-    const [isMounted, setIsMounted] = useState(false);
-    useEffect(() => {
-        setIsMounted(true);
-    }, []);
 
     const resetGame = async () => {
         if (!isHost) return;
