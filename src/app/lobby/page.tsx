@@ -61,6 +61,14 @@ export default function LobbyPage() {
     if (error || data.error) return <div className="p-4 text-center text-red-500 bg-zinc-950 min-h-screen pt-20">{t('game_not_found')}</div>;
 
     const game = data?.game;
+    // Guard: data exists but game might be missing (e.g. deleted or sync issue)
+    if (!game) return (
+        <div className="flex flex-col items-center justify-center min-h-screen bg-zinc-950 text-zinc-50 space-y-4">
+            <Loader2 className="w-10 h-10 animate-spin text-indigo-500" />
+            <p className="text-zinc-500 font-medium tracking-wide">Syncing...</p>
+        </div>
+    );
+
     const players = data?.players || [];
     const myId = typeof window !== 'undefined' ? localStorage.getItem("werewolf_player_id") : null;
     const me = players.find((p: any) => p.id === myId);
