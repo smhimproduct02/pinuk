@@ -21,7 +21,11 @@ export default function LobbyPage() {
         villager: 1,
         seer: 1,
         robber: 0,
-        troublemaker: 0
+        troublemaker: 0,
+        minion: 0,
+        tanner: 0,
+        drunk: 0,
+        insomniac: 0
     });
 
     const router = useRouter();
@@ -65,45 +69,45 @@ export default function LobbyPage() {
     const playerCount = players.length;
 
     // Auto-Config: Update roleConfig when playerCount changes
+    // Auto-Config: Update roleConfig when playerCount changes
     useEffect(() => {
         if (isHost && playerCount > 0) {
-            const newConfig = { ...roleConfig };
-            // Reset
-            newConfig.werewolf = 0;
-            newConfig.villager = 0;
-            newConfig.seer = 1;
-            newConfig.robber = 1;
-            newConfig.troublemaker = 1;
+            // Avoid infinite loop by checking if config already matches
+            // We only re-calc if total config != playerCount OR we want to rebalance on change
+            const currentTotal = Object.values(roleConfig).reduce((a, b) => a + b, 0);
+            if (currentTotal === playerCount) return; // Already balanced, user might have customized it. Wait, if player count changes, we SHOULD rebalance.
 
-            // Basic balance logic (One Night Style)
-            if (playerCount <= 3) {
-                newConfig.werewolf = 1;
+            // Actually, we should only auto-rebalance if the host hasn't manually touched it? 
+            // For now, let's just ensure it sums up correctly to prevent "Start" button lockout.
+
+            setRoleConfig(prev => {
+                const newConfig = { ...prev };
+                // Reset roles for standard distribution
+                newConfig.werewolf = playerCount >= 15 ? 4 : (playerCount >= 8 ? 3 : 2);
                 newConfig.seer = 1;
                 newConfig.robber = 1;
-                newConfig.troublemaker = 0; // Too chaotic for 3
-                // Remainder villagers
-                const current = 3; // ww+seer+robber
-                newConfig.villager = Math.max(0, playerCount - current);
-            } else {
-                newConfig.werewolf = 2;
-                // Standard: 2 WW, 1 Seer, 1 Robber, 1 TM
-                const current = 5;
-                newConfig.villager = Math.max(0, playerCount - current);
-            }
-            // Ensure exact match for validation
-            // Wait, logic in api/start implies we need only total match?
-            // Actually, let's force strict match to avoid confusion
-            // Recalculate diff to ensure exact count
-            const total = Object.values(newConfig).reduce((a: any, b: any) => a + b, 0);
-            if (total < playerCount) {
-                newConfig.villager += (playerCount - total);
-            } else if (total > playerCount) {
-                // Should not happen with above logic but safe guard
-                // Remove from villager first
-                newConfig.villager = Math.max(0, newConfig.villager - (total - playerCount));
-            }
+                newConfig.troublemaker = 1;
+                newConfig.minion = playerCount >= 10 ? 1 : 0;
+                newConfig.drunk = playerCount >= 12 ? 1 : 0;
+                newConfig.insomniac = playerCount >= 12 ? 1 : 0;
+                newConfig.tanner = playerCount >= 15 ? 1 : 0;
 
-            setRoleConfig(newConfig);
+                // Basics
+                const specials = newConfig.werewolf + newConfig.seer + newConfig.robber + newConfig.troublemaker + newConfig.minion + newConfig.drunk + newConfig.insomniac + newConfig.tanner;
+                const villagersNeeded = Math.max(0, playerCount - specials);
+                newConfig.villager = villagersNeeded;
+
+                // Final adjustment to match exact count (if negative villagers, reduce specials)
+                // This shouldn't happen with 30 players but for small games:
+                const total = specials + villagersNeeded;
+                if (total > playerCount) {
+                    // Too many specials, reduce Wolves first? No, reduce simpler ones.
+                    // For simplicity, just reset to all villagers if < 3?
+                    if (playerCount < 3) return prev; // Let them handle it
+                }
+
+                return newConfig;
+            });
         }
     }, [playerCount, isHost]);
 

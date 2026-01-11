@@ -182,36 +182,39 @@ export default function TVPage() {
                 {/* removed */}
 
                 {/* Right: Premium Player Grid */}
-                <div className="w-full lg:flex-1 grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 content-start order-3">
+                {/* Dynamic Configuration: For < 12 players use 4 cols, < 20 use 5 cols, >= 20 use 6 cols */}
+                <div className={`w-full lg:flex-1 grid gap-4 content-start order-3 ${players.length > 20 ? 'grid-cols-3 md:grid-cols-6' : (players.length > 12 ? 'grid-cols-3 md:grid-cols-5' : 'grid-cols-2 lg:grid-cols-4')
+                    }`}>
                     {players.map((p: any) => (
-                        <div key={p.id} className={`relative group h-64 rounded-[2rem] p-6 flex flex-col items-center justify-between transition-all duration-500 ${p.isAlive
+                        <div key={p.id} className={`relative group rounded-2xl p-2 flex flex-col items-center justify-between transition-all duration-500 ${p.isAlive
                             ? (isNight
                                 ? 'bg-zinc-900 border border-white/10 shadow-2xl shadow-indigo-900/20'
                                 : 'bg-white border border-zinc-200 shadow-xl shadow-zinc-200/50')
                             : 'bg-red-950/30 border border-red-900/30 opacity-60 grayscale'
-                            }`}>
+                            } ${players.length > 20 ? 'h-32' : 'h-64'}`}>
+
                             {/* Avatar / Role Icon */}
                             <div className="relative flex-1 w-full flex items-center justify-center">
                                 {!p.isAlive ? (
-                                    <Skull className="w-24 h-24 text-red-500 opacity-80" />
+                                    <Skull className={`${players.length > 20 ? 'w-12 h-12' : 'w-24 h-24'} text-red-500 opacity-80`} />
                                 ) : (
-                                    <div className={`w-32 h-32 rounded-full overflow-hidden border-4 shadow-lg flex items-center justify-center text-4xl font-black ${isNight ? 'bg-indigo-600 border-indigo-400 text-white' : 'bg-orange-500 border-orange-300 text-white'}`}>
+                                    <div className={`rounded-full overflow-hidden border-4 shadow-lg flex items-center justify-center font-black ${isNight ? 'bg-indigo-600 border-indigo-400 text-white' : 'bg-orange-500 border-orange-300 text-white'} ${players.length > 20 ? 'w-16 h-16 text-xl' : 'w-32 h-32 text-4xl'}`}>
                                         {p.name.charAt(0).toUpperCase()}
                                     </div>
                                 )}
                             </div>
 
                             {/* Name Badge */}
-                            <div className={`w-full py-3 rounded-xl text-center backdrop-blur-md ${isNight ? 'bg-white/5' : 'bg-black/5'}`}>
-                                <span className={`text-2xl font-black truncate px-2 block ${isNight ? 'text-white' : 'text-zinc-900'}`}>
+                            <div className={`w-full py-1 rounded-lg text-center backdrop-blur-md ${isNight ? 'bg-white/5' : 'bg-black/5'}`}>
+                                <span className={`font-black truncate px-1 block ${isNight ? 'text-white' : 'text-zinc-900'} ${players.length > 20 ? 'text-sm' : 'text-2xl'}`}>
                                     {p.name}
                                 </span>
                             </div>
 
                             {/* Elimination Overlay */}
                             {!p.isAlive && (
-                                <div className="absolute top-4 right-4 bg-red-600 text-white text-xs font-black uppercase px-3 py-1 rounded-full tracking-widest">
-                                    Eliminated
+                                <div className="absolute top-2 right-2 bg-red-600 text-white text-[10px] font-black uppercase px-2 py-0.5 rounded-full tracking-widest">
+                                    X
                                 </div>
                             )}
                         </div>
