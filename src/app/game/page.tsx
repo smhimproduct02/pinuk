@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Moon, Sun, Ghost, Check, Eye, HelpCircle, Shuffle, UserMinus, Skull, Volume2, VolumeX } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSound } from "@/contexts/SoundContext";
+import ParticleEffect from "@/components/ParticleEffect";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -101,9 +102,15 @@ export default function GamePage() {
         if (game.winner === "tanner" && myRole === "tanner") isWinner = true;
 
         return (
-            <div className={`min-h-screen flex flex-col items-center justify-center p-10 text-center ${isWinner ? 'bg-green-950 text-green-200' : 'bg-red-950 text-red-200'} animate-in fade-in duration-1000`}>
-                <h1 className="text-5xl font-bold mb-4">{isWinner ? t('victory') : t('defeat')}</h1>
-                <p className="text-xl opacity-70 mb-8">
+            <div className={`min-h-screen flex flex-col items-center justify-center p-10 text-center relative overflow-hidden ${isWinner ? 'bg-gradient-to-b from-green-900 via-emerald-950 to-black text-green-200' : 'bg-gradient-to-b from-red-900 via-rose-950 to-black text-red-200'} animate-in fade-in duration-1000`}>
+                {/* Confetti for Winners */}
+                {isWinner && <ParticleEffect type="confetti" count={80} />}
+
+                {/* Glowing Background */}
+                <div className={`fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 ${isWinner ? 'bg-green-500/20' : 'bg-red-500/20'} rounded-full blur-3xl animate-[pulse-glow_3s_ease-in-out_infinite]`} />
+
+                <h1 className="text-5xl font-black mb-4 relative z-10 animate-[slide-up_0.6s_ease-out]">{isWinner ? t('victory') : t('defeat')}</h1>
+                <p className="text-xl opacity-70 mb-8 relative z-10 animate-[fade-in-scale_0.8s_ease-out_0.2s_both]">
                     {game.winner === "villager" && t('win_villager')}
                     {game.winner === "werewolf" && t('win_werewolf')}
                     {game.winner === "tanner" && t('win_tanner')}
@@ -333,7 +340,13 @@ export default function GamePage() {
         }
 
         return (
-            <div className="min-h-screen bg-zinc-950 p-4 pb-24 relative overflow-hidden">
+            <div className="min-h-screen bg-gradient-to-b from-indigo-950 via-purple-950 to-black p-4 pb-24 relative overflow-hidden">
+                {/* Animated Starry Sky Background */}
+                <ParticleEffect type="stars" count={100} />
+
+                {/* Moonlight Glow */}
+                <div className="fixed top-10 right-10 w-40 h-40 bg-blue-300/10 rounded-full blur-3xl animate-[breathe_4s_ease-in-out_infinite]" />
+
                 {/* INITIAL ROLE REVEAL OVERLAY */}
                 {showInitialRole && (
                     <div className="fixed inset-0 z-[60] bg-black flex flex-col items-center justify-center p-6 animate-in fade-in duration-500">
@@ -632,7 +645,11 @@ export default function GamePage() {
     // 2. DAY VIEW (Voting)
     if (isDay) {
         return (
-            <div className="min-h-screen bg-zinc-950 p-4 pb-24 text-zinc-50 relative overflow-hidden">
+            <div className="min-h-screen bg-gradient-to-b from-orange-200 via-yellow-100 to-orange-50 p-4 pb-24 text-zinc-900 relative overflow-hidden">
+                {/* Animated Sun and Sun Rays */}
+                <div className="fixed top-10 left-1/2 -translate-x-1/2 w-32 h-32 bg-yellow-300 rounded-full blur-2xl opacity-40 animate-[breathe_3s_ease-in-out_infinite]" />
+                <div className="fixed top-10 left-1/2 -translate-x-1/2 w-24 h-24 bg-yellow-400 rounded-full opacity-60 animate-[pulse-glow_2s_ease-in-out_infinite]" />
+
                 {/* HEADER / TIMER / ROOM CODE */}
                 <div className="flex justify-between items-center max-w-6xl mx-auto pt-2 relative z-20">
                     <div className="flex items-center gap-4">
