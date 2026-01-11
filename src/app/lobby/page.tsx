@@ -124,7 +124,7 @@ export default function LobbyPage() {
                 return newConfig;
             });
         }
-    }, [playerCount, isHost, roleConfig]);
+    }, [playerCount, isHost]); // Removed roleConfig to prevent infinite loop
 
     const totalConfigured = Object.values(roleConfig).reduce((a, b) => a + b, 0);
     const isValidConfig = totalConfigured === playerCount;
