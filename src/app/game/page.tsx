@@ -159,11 +159,32 @@ export default function GamePage() {
 
     // --- DEAD VIEW ---
     if (!myPlayer.isAlive) {
+        // Determine cause of death context
+        // If it's day now, they likely died last night (Werewolf)
+        // If it's night now, they likely died today (Vote)
+        // This is a heuristic. Ideally we store cause of death.
+        // But for now:
+        // isNight = they died by Vote (Day just ended)
+        // isDay = they died by Wolf (Night just ended)
+
+        // Actually, let's look at the previous phase logic or just simple inference.
+        // If I am dead and it is Day -> I died at Night (Wolf)
+        // If I am dead and it is Night -> I died at Day (Vote)
+        // Exceptions: Hunter kill (immediate), Tanner (immediate win).
+
+        const deathMessage = isDay ? t('death_wolf') : t('death_vote');
+        const DeathIcon = isDay ? Skull : Ghost;
+
         return (
-            <div className="min-h-screen bg-red-950/20 flex flex-col items-center justify-center text-red-500">
-                <Ghost className="w-20 h-20 mb-4 animate-bounce" />
-                <h1 className="text-3xl font-bold">{t('you_died')}</h1>
-                <p className="mt-2 text-zinc-400">You are haunting the village.</p>
+            <div className="min-h-screen bg-red-950/20 flex flex-col items-center justify-center text-red-500 p-6 text-center animate-in fade-in duration-1000">
+                <DeathIcon className="w-24 h-24 mb-6 animate-pulse opacity-50" />
+                <h1 className="text-4xl font-black uppercase tracking-widest mb-4 drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]">{t('you_died')}</h1>
+                <p className="text-xl text-red-200/80 max-w-md font-serif italic mb-8 border-l-4 border-red-900/50 pl-4">
+                    "{deathMessage}"
+                </p>
+                <div className="bg-black/40 p-4 rounded-xl border border-red-500/10">
+                    <p className="text-zinc-500 text-sm uppercase font-bold tracking-widest">{t('spectating')}</p>
+                </div>
             </div>
         );
     }
@@ -653,192 +674,216 @@ export default function GamePage() {
                 )}
 
                 {hasActed && (
-                    <div className="fixed bottom-0 left-0 right-0 top-0 z-50 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+                    { hasActed && (
+                    <div className="fixed bottom-0 left-0 right-0 top-0 z-50 flex flex-col items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-in fade-in duration-300">
+
+                        {/* GAME STATUS VISIBILITY FOR ACTED PLAYERS */}
+                        <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center max-w-6xl mx-auto w-full z-10">
+                            <div className="flex flex-col">
+                                <span className="text-[10px] text-zinc-500 uppercase font-black tracking-widest leading-none">{t('game_id')}</span>
+                                <span className="text-xl font-mono font-black text-zinc-700 leading-none">{game.shortId}</span>
+                            </div>
+                             <div className={`flex flex-col items-center justify-center w-16 h-16 rounded-full border-4 border-zinc-800 text-zinc-600 transition-all duration-500 ${timeLeft < 10 ? 'border-red-900/50 text-red-900 animate-pulse' : ''}`}>
+                                <span className="text-2xl font-black">{timeLeft}</span>
+                                <span className="text-[8px] uppercase font-bold tracking-tighter -mt-1">{t('seconds')}</span>
+                             </div>
+                        </div>
 
                         {revealedInfo ? (
-                            <div className="flex flex-col items-center gap-6">
-                                <h2 className="text-2xl font-bold text-white mb-4 uppercase tracking-widest">{t('revealed_info')}</h2>
+                             <div className="flex flex-col items-center gap-6 max-w-md text-center mt-10">
+                                <h2 className="text-2xl font-bold text-white mb-4 uppercase tracking-widest animate-[slide-up_0.5s_ease-out]">{t('revealed_info')}</h2>
 
-                                <div className="flex flex-wrapjustify-center gap-4">
-                                    {/* We need to parse revealedInfo or store raw roles. 
-                                         Ideally we refactor to store raw roles. 
-                                         For now, let's just show the Card Flip for the text if we can, or just a cool card.
-                                         The current revealedInfo is text. 
-                                         Let's render a "Mystery Card" that is already flipped?
-                                         Or just style the results nicely.
-                                     */}
-                                    <div className="perspective-1000 group">
-                                        <div className="relative w-64 h-96 transition-all duration-700 transform-style-3d group-hover:rotate-y-180 rotate-y-180">
-                                            {/* Front (Hidden - logic inverted because we want it revealed) */}
-                                            {/* Actually, let's just show the REVEALED side. 
-                                                If we want animation: Start rot-0 (Back), then set rot-180 (Front) on mount?
-                                             */}
-                                            <div className="absolute inset-0 w-full h-full bg-indigo-900 rounded-xl border-4 border-indigo-500 backface-hidden flex items-center justify-center">
-                                                <Moon className="w-20 h-20 text-indigo-400 opacity-50" />
-                                            </div>
-
-                                            {/* Back (Revealed Content) */}
-                                            <div className="absolute inset-0 w-full h-full bg-zinc-900 rounded-xl border-4 border-white shadow-[0_0_30px_rgba(255,255,255,0.2)] backface-hidden rotate-y-180 flex flex-col items-center justify-center p-6 text-center glow-seer">
-                                                <ParticleEffect type="sparkles" count={20} />
-                                                <Eye className="w-16 h-16 text-emerald-400 mb-6 animate-pulse" />
-                                                <p className="text-xl font-bold text-white leading-snug">{revealedInfo}</p>
-                                                <p className="text-sm text-zinc-400 mt-4">Tap anywhere to close</p>
-                                            </div>
+                                <div className="perspective-1000 group">
+                                    <div className="relative w-64 h-96 transition-all duration-700 transform-style-3d group-hover:rotate-y-180 rotate-y-180 animate-[fade-in-scale_0.6s_ease-out_0.2s_both]">
+                                        <div className="absolute inset-0 w-full h-full bg-indigo-900 rounded-xl border-4 border-indigo-500 backface-hidden flex items-center justify-center">
+                                            <Moon className="w-20 h-20 text-indigo-400 opacity-50" />
+                                        </div>
+                                        <div className="absolute inset-0 w-full h-full bg-zinc-900 rounded-xl border-4 border-white shadow-[0_0_30px_rgba(255,255,255,0.2)] backface-hidden rotate-y-180 flex flex-col items-center justify-center p-6 text-center glow-seer">
+                                            <ParticleEffect type="sparkles" count={20} />
+                                            <Eye className="w-16 h-16 text-emerald-400 mb-6 animate-pulse" />
+                                            <p className="text-xl font-bold text-white leading-snug">{revealedInfo}</p>
                                         </div>
                                     </div>
                                 </div>
-
+                                
                                 <Button variant="outline" className="mt-8 border-white/20 text-white hover:bg-white/10" onClick={() => setHasActed(true)}>
-                                    Close View
+                                    {/* Actually we are IN hasActed=true. This button does nothing essentially if it sets true again. 
+                                        Maybe we want to "Minimize" this view? Or just leave it.
+                                        User asked to see "who doesnt vote yet".
+                                        So we should show that list here.
+                                    */}
+                                    {t('action_submitted')}
                                 </Button>
                             </div>
                         ) : (
-                            <div className="flex flex-col items-center animate-in zoom-in duration-300">
-                                <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(34,197,94,0.5)]">
-                                    <Check className="w-10 h-10 text-white" />
+                            <div className="flex flex-col items-center animate-in zoom-in duration-300 gap-8 mt-10 w-full max-w-lg">
+                                <div className="flex flex-col items-center">
+                                    <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(34,197,94,0.5)]">
+                                        <Check className="w-10 h-10 text-white" />
+                                    </div>
+                                    <span className="text-2xl font-bold text-white tracking-wide">{t('action_submitted')}</span>
+                                    <p className="text-zinc-500 mt-2">{t('waiting_for_others')}</p>
                                 </div>
-                                <span className="text-2xl font-bold text-white tracking-wide">
+
+                                {/* Waiting List Integration */}
+                                {players.filter((p: any) => !p.actionTarget && p.isAlive).length > 0 && (
+                                     <div className="w-full bg-zinc-800/50 rounded-xl p-6 border border-zinc-700/50 backdrop-blur-sm">
+                                        <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500 mb-4 border-b border-zinc-700 pb-2">{t('waiting_for')}</h3>
+                                        <div className="flex flex-wrap gap-2 justify-center">
+                                            {players.filter((p: any) => !p.actionTarget && p.isAlive).map((p: any) => (
+                                                <div key={p.id} className="flex items-center gap-2 bg-zinc-900 px-3 py-2 rounded-lg border border-zinc-700">
+                                                     <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
+                                                     <span className="text-sm font-bold text-zinc-300">{p.name}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                     </div>
+                                )}
+                            </div>
+                        )}
                                     {t('action_submitted')}
                                 </span>
                                 <p className="text-zinc-400 mt-2">Wait for day...</p>
                             </div>
-                        )}
-                    </div>
-                )}
-            </div>
+        )
+    }
+                    </div >
+                )
+}
+            </div >
         );
     }
 
-    // 2. DAY VIEW (Voting)
-    if (isDay) {
-        return (
-            <div className={`min-h-screen bg-gradient-to-b from-orange-200 via-yellow-100 to-orange-50 p-4 pb-24 text-zinc-900 relative overflow-hidden ${timeLeft < 10 ? 'shake-intense' : ''}`}>
-                <PhaseOverlay />
-                {/* Animated Sun and Sun Rays */}
-                <div className="fixed top-10 left-1/2 -translate-x-1/2 w-32 h-32 bg-yellow-300 rounded-full blur-2xl opacity-40 animate-[breathe_3s_ease-in-out_infinite]" />
-                <div className="fixed top-10 left-1/2 -translate-x-1/2 w-24 h-24 bg-yellow-400 rounded-full opacity-60 animate-[pulse-glow_2s_ease-in-out_infinite]" />
+// 2. DAY VIEW (Voting)
+if (isDay) {
+    return (
+        <div className={`min-h-screen bg-gradient-to-b from-orange-200 via-yellow-100 to-orange-50 p-4 pb-24 text-zinc-900 relative overflow-hidden ${timeLeft < 10 ? 'shake-intense' : ''}`}>
+            <PhaseOverlay />
+            {/* Animated Sun and Sun Rays */}
+            <div className="fixed top-10 left-1/2 -translate-x-1/2 w-32 h-32 bg-yellow-300 rounded-full blur-2xl opacity-40 animate-[breathe_3s_ease-in-out_infinite]" />
+            <div className="fixed top-10 left-1/2 -translate-x-1/2 w-24 h-24 bg-yellow-400 rounded-full opacity-60 animate-[pulse-glow_2s_ease-in-out_infinite]" />
 
-                {/* HEADER / TIMER / ROOM CODE */}
-                <div className="flex justify-between items-center max-w-6xl mx-auto pt-2 relative z-20">
-                    <div className="flex items-center gap-4">
-                        <Button variant="ghost" size="icon" onClick={() => setShowMenu(!showMenu)} className="text-zinc-500">
-                            <HelpCircle className="w-6 h-6" />
-                        </Button>
-                        <div className="flex flex-col">
-                            <span className="text-[10px] text-zinc-500 uppercase font-black tracking-widest leading-none">Code</span>
-                            <span className="text-xl font-mono font-black text-indigo-400 leading-none">{game.shortId}</span>
+            {/* HEADER / TIMER / ROOM CODE */}
+            <div className="flex justify-between items-center max-w-6xl mx-auto pt-2 relative z-20">
+                <div className="flex items-center gap-4">
+                    <Button variant="ghost" size="icon" onClick={() => setShowMenu(!showMenu)} className="text-zinc-500">
+                        <HelpCircle className="w-6 h-6" />
+                    </Button>
+                    <div className="flex flex-col">
+                        <span className="text-[10px] text-zinc-500 uppercase font-black tracking-widest leading-none">Code</span>
+                        <span className="text-xl font-mono font-black text-indigo-400 leading-none">{game.shortId}</span>
+                    </div>
+                </div>
+
+                <div className={`flex flex-col items-center justify-center w-16 h-16 rounded-full border-4 transition-all duration-500 ${timeLeft < 10 ? 'border-red-500 text-red-500 animate-pulse pulse-urgency scale-110 shadow-[0_0_20px_rgba(239,68,68,0.5)]' : 'border-indigo-500/30 text-indigo-400'}`}>
+                    <span className="text-2xl font-black">{timeLeft}</span>
+                    <span className="text-[8px] uppercase font-bold tracking-tighter -mt-1">SEC</span>
+                </div>
+
+                <Button variant="ghost" size="icon" onClick={toggleMute} className="text-zinc-500">
+                    {isMuted ? <VolumeX /> : <Volume2 />}
+                </Button>
+            </div>
+
+            {/* NON-VOTER LIST */}
+            <div className="max-w-6xl mx-auto mt-6 px-2">
+                {players.filter((p: any) => !p.actionTarget && p.isAlive).length > 0 && (
+                    <div className="bg-zinc-900/40 border border-white/5 p-3 rounded-2xl flex items-center gap-3 overflow-x-auto custom-scrollbar">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-zinc-600 whitespace-nowrap">Waiting for:</span>
+                        <div className="flex gap-2">
+                            {players.filter((p: any) => !p.actionTarget && p.isAlive).map((p: any) => (
+                                <span key={p.id} className="text-xs font-bold text-zinc-400 bg-zinc-800/80 px-3 py-1.5 rounded-full border border-white/5 whitespace-nowrap">
+                                    {p.name}
+                                </span>
+                            ))}
                         </div>
                     </div>
+                )}
+            </div>
 
-                    <div className={`flex flex-col items-center justify-center w-16 h-16 rounded-full border-4 transition-all duration-500 ${timeLeft < 10 ? 'border-red-500 text-red-500 animate-pulse pulse-urgency scale-110 shadow-[0_0_20px_rgba(239,68,68,0.5)]' : 'border-indigo-500/30 text-indigo-400'}`}>
-                        <span className="text-2xl font-black">{timeLeft}</span>
-                        <span className="text-[8px] uppercase font-bold tracking-tighter -mt-1">SEC</span>
-                    </div>
+            {/* PLAYER MENU */}
+            {showMenu && (
+                <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-md flex items-start justify-start p-4 animate-in slide-in-from-left duration-300">
+                    <Card className="w-64 bg-zinc-900 border-zinc-800 shadow-2xl">
+                        <CardContent className="p-0">
+                            <div className="p-6 border-b border-zinc-800">
+                                <h3 className="text-sm font-black uppercase tracking-widest text-zinc-500 mb-4">Player Menu</h3>
+                                <div className="space-y-1">
+                                    <p className="text-xs text-zinc-600 uppercase font-bold tracking-tighter leading-none">Your Role</p>
+                                    <p className="text-lg font-black text-white uppercase">{myRole}</p>
+                                </div>
+                            </div>
+                            <div className="p-2 space-y-1">
+                                <Button variant="ghost" className="w-full justify-start text-zinc-400 hover:text-white hover:bg-zinc-800" onClick={() => setShowMenu(false)}>
+                                    Resume Game
+                                </Button>
+                                <Button variant="ghost" className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-900/20" onClick={() => router.push("/")}>
+                                    Exit to Menu
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                    <div className="flex-1 h-full" onClick={() => setShowMenu(false)}></div>
+                </div>
+            )}
 
-                    <Button variant="ghost" size="icon" onClick={toggleMute} className="text-zinc-500">
-                        {isMuted ? <VolumeX /> : <Volume2 />}
+            <div className="text-center mb-8">
+                <Sun className="w-12 h-12 mx-auto text-orange-400 mb-2 animate-spin-slow" />
+                <h1 className="text-xl font-bold uppercase tracking-widest">{t('day_phase')}</h1>
+                <p className="text-zinc-500 text-sm">{t('choose_victim')}</p>
+            </div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto">
+                {players
+                    .filter((p: any) => p.isAlive)
+                    .map((p: any) => (
+                        <div
+                            key={p.id}
+                            onClick={(e) => { if (!hasActed) { toggleTarget(p.id, e); } }}
+                            className={`p-4 rounded-xl border flex items-center justify-between transition-all cursor-pointer h-24 ${selectedTargets.includes(p.id)
+                                ? 'bg-red-900/30 border-red-500 ring-1 ring-red-500 shadow-[0_0_15px_rgba(239,68,68,0.2)]'
+                                : 'bg-zinc-800/40 border-zinc-700/50 hover:bg-zinc-800 hover:border-zinc-600'
+                                }`}
+                        >
+                            <div className="flex items-center space-x-4">
+                                <div className="w-12 h-12 rounded-full bg-zinc-700 flex items-center justify-center font-bold text-lg shadow-inner text-zinc-200">
+                                    {p.name.charAt(0).toUpperCase()}
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="font-semibold text-lg text-zinc-200">{p.name}</span>
+                                    {p.id === myPlayer.id && <span className="text-xs text-zinc-500 font-medium uppercase tracking-wider">(You)</span>}
+                                </div>
+                            </div>
+                            {selectedTargets.includes(p.id) && (
+                                <div className="bg-red-500 text-white p-2 rounded-full shadow-lg">
+                                    <Check className="w-5 h-5" />
+                                </div>
+                            )}
+                        </div>
+                    ))}
+            </div>
+
+            {!hasActed && (
+                <div className="fixed bottom-0 left-0 right-0 px-4 flex justify-center mb-20 pb-safe">
+                    <Button
+                        className="w-full max-w-sm bg-red-600 hover:bg-red-700 font-bold py-6 text-lg"
+                        disabled={selectedTargets.length === 0}
+                        onClick={submitAction}
+                    >
+                        {t('vote_eliminate')}
                     </Button>
                 </div>
-
-                {/* NON-VOTER LIST */}
-                <div className="max-w-6xl mx-auto mt-6 px-2">
-                    {players.filter((p: any) => !p.actionTarget && p.isAlive).length > 0 && (
-                        <div className="bg-zinc-900/40 border border-white/5 p-3 rounded-2xl flex items-center gap-3 overflow-x-auto custom-scrollbar">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-600 whitespace-nowrap">Waiting for:</span>
-                            <div className="flex gap-2">
-                                {players.filter((p: any) => !p.actionTarget && p.isAlive).map((p: any) => (
-                                    <span key={p.id} className="text-xs font-bold text-zinc-400 bg-zinc-800/80 px-3 py-1.5 rounded-full border border-white/5 whitespace-nowrap">
-                                        {p.name}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-                    )}
+            )}
+            {hasActed && (
+                <div className="fixed bottom-0 left-0 right-0 px-4 flex justify-center mb-20 pb-safe">
+                    <span className="bg-zinc-800 text-zinc-400 px-6 py-3 rounded-full font-medium">
+                        {t('vote_cast')}
+                    </span>
                 </div>
+            )}
+        </div>
+    );
+}
 
-                {/* PLAYER MENU */}
-                {showMenu && (
-                    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-md flex items-start justify-start p-4 animate-in slide-in-from-left duration-300">
-                        <Card className="w-64 bg-zinc-900 border-zinc-800 shadow-2xl">
-                            <CardContent className="p-0">
-                                <div className="p-6 border-b border-zinc-800">
-                                    <h3 className="text-sm font-black uppercase tracking-widest text-zinc-500 mb-4">Player Menu</h3>
-                                    <div className="space-y-1">
-                                        <p className="text-xs text-zinc-600 uppercase font-bold tracking-tighter leading-none">Your Role</p>
-                                        <p className="text-lg font-black text-white uppercase">{myRole}</p>
-                                    </div>
-                                </div>
-                                <div className="p-2 space-y-1">
-                                    <Button variant="ghost" className="w-full justify-start text-zinc-400 hover:text-white hover:bg-zinc-800" onClick={() => setShowMenu(false)}>
-                                        Resume Game
-                                    </Button>
-                                    <Button variant="ghost" className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-900/20" onClick={() => router.push("/")}>
-                                        Exit to Menu
-                                    </Button>
-                                </div>
-                            </CardContent>
-                        </Card>
-                        <div className="flex-1 h-full" onClick={() => setShowMenu(false)}></div>
-                    </div>
-                )}
-
-                <div className="text-center mb-8">
-                    <Sun className="w-12 h-12 mx-auto text-orange-400 mb-2 animate-spin-slow" />
-                    <h1 className="text-xl font-bold uppercase tracking-widest">{t('day_phase')}</h1>
-                    <p className="text-zinc-500 text-sm">{t('choose_victim')}</p>
-                </div>
-
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto">
-                    {players
-                        .filter((p: any) => p.isAlive)
-                        .map((p: any) => (
-                            <div
-                                key={p.id}
-                                onClick={(e) => { if (!hasActed) { toggleTarget(p.id, e); } }}
-                                className={`p-4 rounded-xl border flex items-center justify-between transition-all cursor-pointer h-24 ${selectedTargets.includes(p.id)
-                                    ? 'bg-red-900/30 border-red-500 ring-1 ring-red-500 shadow-[0_0_15px_rgba(239,68,68,0.2)]'
-                                    : 'bg-zinc-800/40 border-zinc-700/50 hover:bg-zinc-800 hover:border-zinc-600'
-                                    }`}
-                            >
-                                <div className="flex items-center space-x-4">
-                                    <div className="w-12 h-12 rounded-full bg-zinc-700 flex items-center justify-center font-bold text-lg shadow-inner text-zinc-200">
-                                        {p.name.charAt(0).toUpperCase()}
-                                    </div>
-                                    <div className="flex flex-col">
-                                        <span className="font-semibold text-lg text-zinc-200">{p.name}</span>
-                                        {p.id === myPlayer.id && <span className="text-xs text-zinc-500 font-medium uppercase tracking-wider">(You)</span>}
-                                    </div>
-                                </div>
-                                {selectedTargets.includes(p.id) && (
-                                    <div className="bg-red-500 text-white p-2 rounded-full shadow-lg">
-                                        <Check className="w-5 h-5" />
-                                    </div>
-                                )}
-                            </div>
-                        ))}
-                </div>
-
-                {!hasActed && (
-                    <div className="fixed bottom-0 left-0 right-0 px-4 flex justify-center mb-20 pb-safe">
-                        <Button
-                            className="w-full max-w-sm bg-red-600 hover:bg-red-700 font-bold py-6 text-lg"
-                            disabled={selectedTargets.length === 0}
-                            onClick={submitAction}
-                        >
-                            {t('vote_eliminate')}
-                        </Button>
-                    </div>
-                )}
-                {hasActed && (
-                    <div className="fixed bottom-0 left-0 right-0 px-4 flex justify-center mb-20 pb-safe">
-                        <span className="bg-zinc-800 text-zinc-400 px-6 py-3 rounded-full font-medium">
-                            {t('vote_cast')}
-                        </span>
-                    </div>
-                )}
-            </div>
-        );
-    }
-
-    return <div>Loading...</div>;
+return <div>Loading...</div>;
 }

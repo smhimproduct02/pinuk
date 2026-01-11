@@ -24,6 +24,10 @@ export type TranslationKey =
     | 'defeat'
     | 'back_home'
     | 'you_died'
+    | 'death_wolf'
+    | 'death_vote'
+    | 'spectating'
+    | 'waiting_for_others'
     | 'night_phase'
     | 'day_phase'
     | 'choose_victim'
@@ -90,6 +94,10 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
         defeat: 'DEFEAT',
         back_home: 'Back to Home',
         you_died: 'YOU DIED',
+        death_wolf: 'You were mauled by a werewolf in the dead of night.',
+        death_vote: 'The village has cast you out into the void.',
+        spectating: 'You are now haunting the village as a ghost.',
+        waiting_for_others: 'Waiting for others to finish...',
         night_phase: 'Night Phase',
         day_phase: 'Day Phase',
         choose_victim: 'Choose a victim via majority vote.',
@@ -171,6 +179,10 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
         defeat: 'KALOH',
         back_home: 'Balik Asal',
         you_died: 'MUNG DOH MAMPUS',
+        death_wolf: 'Kena bahang ke serigala doh malang tadi.',
+        death_vote: 'Orang kampong pakat buang mung.',
+        spectating: 'Mung jadi hantu doh lening.',
+        waiting_for_others: 'Tunggu orang lain siap lok...',
         night_phase: 'Malang',
         day_phase: 'Siang',
         choose_victim: 'Pilih sapa nok bahang.',
