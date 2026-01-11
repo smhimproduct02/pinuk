@@ -60,7 +60,8 @@ export default function LobbyPage() {
     );
     if (error || data.error) return <div className="p-4 text-center text-red-500 bg-zinc-950 min-h-screen pt-20">{t('game_not_found')}</div>;
 
-    const { game, players } = data;
+    const game = data?.game;
+    const players = data?.players || [];
     const myId = typeof window !== 'undefined' ? localStorage.getItem("werewolf_player_id") : null;
     const me = players.find((p: any) => p.id === myId);
     const isHost = me?.isHost;
@@ -109,7 +110,7 @@ export default function LobbyPage() {
                 return newConfig;
             });
         }
-    }, [playerCount, isHost]);
+    }, [playerCount, isHost, roleConfig]);
 
     const totalConfigured = Object.values(roleConfig).reduce((a, b) => a + b, 0);
     const isValidConfig = totalConfigured === playerCount;
