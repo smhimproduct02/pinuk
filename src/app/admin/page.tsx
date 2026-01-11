@@ -122,6 +122,35 @@ export default function AdminPage() {
     const isValidConfig = totalConfigured >= playerCount;
     const centerCardsCount = Math.max(0, totalConfigured - playerCount);
 
+    // AUTO-CONFIG: Update roleConfig when playerCount changes
+    useEffect(() => {
+        if (playerCount > 0 && game?.status === 'waiting') {
+            const currentTotal = Object.values(roleConfig).reduce((a, b) => a + b, 0);
+            if (currentTotal === playerCount) return; // Already balanced
+
+            setRoleConfig(prev => {
+                const newConfig = { ...prev };
+                newConfig.werewolf = playerCount >= 15 ? 4 : (playerCount >= 8 ? 3 : 2);
+                newConfig.seer = 1;
+                newConfig.robber = 1;
+                newConfig.troublemaker = 1;
+                newConfig.minion = playerCount >= 10 ? 1 : 0;
+                newConfig.drunk = playerCount >= 12 ? 1 : 0;
+                newConfig.insomniac = playerCount >= 12 ? 1 : 0;
+                newConfig.tanner = playerCount >= 15 ? 1 : 0;
+
+                const specials = newConfig.werewolf + newConfig.seer + newConfig.robber + newConfig.troublemaker + newConfig.minion + newConfig.drunk + newConfig.insomniac + newConfig.tanner;
+                const villagersNeeded = Math.max(0, playerCount - specials);
+                newConfig.villager = villagersNeeded;
+
+                const total = specials + villagersNeeded;
+                if (total > playerCount && playerCount < 3) return prev;
+
+                return newConfig;
+            });
+        }
+    }, [playerCount, game?.status]);
+
     const updateConfig = (role: keyof typeof roleConfig, delta: number) => {
         setRoleConfig(prev => {
             const newVal = Math.max(0, prev[role] + delta);
