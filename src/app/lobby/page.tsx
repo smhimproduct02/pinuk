@@ -152,6 +152,11 @@ export default function LobbyPage() {
         }
     };
 
+    const [isMounted, setIsMounted] = useState(false);
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
     const resetGame = async () => {
         if (!isHost) return;
         if (confirm(t('confirm_reset'))) {
@@ -163,6 +168,8 @@ export default function LobbyPage() {
             mutate();
         }
     };
+
+    if (!isMounted) return null; // [FIX] Prevent Hydration Mismatch by rendering nothing until client mounts
 
     return (
         <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/40 via-zinc-950 to-zinc-950 text-zinc-50 p-6 pb-24 font-sans">
