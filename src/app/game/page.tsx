@@ -30,8 +30,8 @@ export default function GamePage() {
     const router = useRouter();
 
     useEffect(() => {
-        setGameId(localStorage.getItem("werewolf_game_id"));
-        setPlayerId(localStorage.getItem("werewolf_player_id"));
+        setGameId(sessionStorage.getItem("werewolf_game_id"));
+        setPlayerId(sessionStorage.getItem("werewolf_player_id"));
     }, []);
 
     const { data, error, mutate } = useSWR(

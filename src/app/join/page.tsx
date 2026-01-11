@@ -39,9 +39,9 @@ export default function JoinPage() {
             }
 
             const data = await res.json();
-            // Store player info in local storage for persistence
-            localStorage.setItem("werewolf_player_id", data.playerId);
-            localStorage.setItem("werewolf_game_id", data.gameId);
+            // Store player info in session storage for tab isolation
+            sessionStorage.setItem("werewolf_player_id", data.playerId);
+            sessionStorage.setItem("werewolf_game_id", data.gameId);
 
             router.push("/lobby");
         } catch (err: any) {

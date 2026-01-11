@@ -34,10 +34,10 @@ export default function AdminPage() {
     });
 
     useEffect(() => {
-        const savedId = localStorage.getItem("werewolf_game_id");
+        const savedId = sessionStorage.getItem("werewolf_game_id");
         if (savedId) setGameId(savedId);
 
-        const isAdmin = localStorage.getItem("werewolf_admin_auth");
+        const isAdmin = sessionStorage.getItem("werewolf_admin_auth");
         if (isAdmin === "true") setIsAuthenticated(true);
     }, []);
 
@@ -45,7 +45,7 @@ export default function AdminPage() {
         e.preventDefault();
         if (password === "068538") {
             setIsAuthenticated(true);
-            localStorage.setItem("werewolf_admin_auth", "true");
+            sessionStorage.setItem("werewolf_admin_auth", "true");
         } else {
             setErrorInput("Invalid password");
         }
@@ -58,7 +58,7 @@ export default function AdminPage() {
             const data = await res.json();
             if (data.success) {
                 setGameId(data.gameId);
-                localStorage.setItem("werewolf_game_id", data.gameId);
+                sessionStorage.setItem("werewolf_game_id", data.gameId);
             }
         } catch (error) {
             console.error("Failed to create game", error);
@@ -80,7 +80,7 @@ export default function AdminPage() {
     useEffect(() => {
         if (data && !game) {
             setGameId(null);
-            localStorage.removeItem("werewolf_game_id");
+            sessionStorage.removeItem("werewolf_game_id");
         }
     }, [data, game]);
 
@@ -227,7 +227,7 @@ export default function AdminPage() {
                             className="text-xs text-zinc-500 hover:text-red-400"
                             onClick={() => {
                                 if (confirm("Logout Admin?")) {
-                                    localStorage.removeItem("werewolf_admin_auth");
+                                    sessionStorage.removeItem("werewolf_admin_auth");
                                     setIsAuthenticated(false);
                                 }
                             }}
@@ -412,7 +412,7 @@ export default function AdminPage() {
                                                 className="h-8 text-[10px] text-zinc-500 hover:text-white"
                                                 onClick={() => {
                                                     setGameId(session.id);
-                                                    localStorage.setItem("werewolf_game_id", session.id);
+                                                    sessionStorage.setItem("werewolf_game_id", session.id);
                                                 }}
                                             >
                                                 Switch

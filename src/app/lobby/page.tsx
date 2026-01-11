@@ -35,7 +35,7 @@ export default function LobbyPage() {
     const [myId, setMyId] = useState<string | null>(null);
 
     useEffect(() => {
-        const savedId = localStorage.getItem("werewolf_game_id");
+        const savedId = sessionStorage.getItem("werewolf_game_id");
         if (!savedId) {
             router.push("/join");
         } else {
@@ -48,7 +48,7 @@ export default function LobbyPage() {
     }, []);
 
     useEffect(() => {
-        setMyId(localStorage.getItem("werewolf_player_id"));
+        setMyId(sessionStorage.getItem("werewolf_player_id"));
     }, []);
 
     const { data, error, mutate } = useSWR(
