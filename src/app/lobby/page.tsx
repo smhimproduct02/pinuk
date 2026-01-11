@@ -70,7 +70,13 @@ export default function LobbyPage() {
     );
 
     const players = data?.players || [];
-    const myId = typeof window !== 'undefined' ? localStorage.getItem("werewolf_player_id") : null;
+
+    // [FIX] Hydration Safety: Fetch ID only on client side
+    const [myId, setMyId] = useState<string | null>(null);
+    useEffect(() => {
+        setMyId(localStorage.getItem("werewolf_player_id"));
+    }, []);
+
     const me = players.find((p: any) => p.id === myId);
     const isHost = me?.isHost;
 
