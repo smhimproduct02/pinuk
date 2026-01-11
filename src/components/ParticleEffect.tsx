@@ -83,6 +83,7 @@ export default function ParticleEffect({ type, count = 50 }: ParticleEffectProps
                         borderRadius: type === "stars" ? "50%" : (type === "sparkles" ? "2px" : "4px"),
                         transform: type === "sparkles" ? "rotate(45deg)" : undefined,
                         animationDelay: type === "stars" ? `${Math.random() * 3}s` : undefined,
+                        willChange: "transform, opacity",
                     }}
                 />
             ))}

@@ -23,7 +23,22 @@ export default function GamePage() {
     const [showInitialRole, setShowInitialRole] = useState(true);
     const [timeLeft, setTimeLeft] = useState(60);
     const [showMenu, setShowMenu] = useState(false);
+    const [phaseTransition, setPhaseTransition] = useState<{ active: boolean; type: "night" | "day" | null }>({
+        active: false,
+        type: null
+    });
+    const [ripples, setRipples] = useState<{ id: number; x: number; y: number }[]>([]);
 
+    const addRipple = (e: React.MouseEvent<HTMLElement>) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const id = Date.now();
+        setRipples(prev => [...prev, { id, x, y }]);
+        setTimeout(() => {
+            setRipples(prev => prev.filter(r => r.id !== id));
+        }, 600);
+    };
     // Track previous phase to trigger sounds
     const prevPhaseRef = useRef<string | null>(null);
 
@@ -49,6 +64,15 @@ export default function GamePage() {
         if (game?.phase) {
             const currentPhase = game.phase;
             if (prevPhaseRef.current !== currentPhase) {
+                // Trigger Phase Transition Overlay
+                if (prevPhaseRef.current !== null) {
+                    setPhaseTransition({
+                        active: true,
+                        type: currentPhase === "night" ? "night" : "day"
+                    });
+                    setTimeout(() => setPhaseTransition({ active: false, type: null }), 3000);
+                }
+
                 if (currentPhase === "night") {
                     playSound("night_start");
                     setShowInitialRole(true); // Reset for new night
@@ -145,8 +169,9 @@ export default function GamePage() {
     }
 
     // --- TARGET SELECTION LOGIC ---
-    const toggleTarget = (targetId: string) => {
+    const toggleTarget = (targetId: string, e: React.MouseEvent<HTMLElement>) => {
         if (hasActed) return;
+        addRipple(e);
         playSound("click");
 
         // Logic branching based on Role
@@ -194,6 +219,30 @@ export default function GamePage() {
             if (targetId.startsWith("center_")) return; // Only Seer/Drunk touch center
             setSelectedTargets([targetId]);
         }
+    };
+
+    // --- CINEMATIC OVERLAY COMPONENT ---
+    const PhaseOverlay = () => {
+        if (!phaseTransition.active) return null;
+
+        const isNightTrans = phaseTransition.type === "night";
+
+        return (
+            <div className={`fixed inset-0 z-[100] flex flex-col items-center justify-center animate-in fade-in zoom-in duration-500 bg-black/90 backdrop-blur-md`}>
+                <div className="relative">
+                    {isNightTrans ? (
+                        <Moon className="w-32 h-32 text-indigo-500 mb-8 animate-[spin-slow_10s_linear_infinite]" />
+                    ) : (
+                        <Sun className="w-32 h-32 text-orange-400 mb-8 animate-[spin-slow_10s_linear_infinite]" />
+                    )}
+                    <div className="absolute inset-0 blur-2xl bg-current opacity-20 animate-pulse"></div>
+                </div>
+                <h2 className={`text-6xl font-black uppercase tracking-widest ${isNightTrans ? 'text-indigo-400' : 'text-orange-400'} animate-[slide-up_0.5s_ease-out]`}>
+                    {isNightTrans ? t('night_phase') : t('day_phase')}
+                </h2>
+                <div className={`mt-4 h-1 w-64 bg-gradient-to-r from-transparent ${isNightTrans ? 'via-indigo-500' : 'via-orange-500'} to-transparent animate-[shimmer_2s_infinite]`}></div>
+            </div>
+        );
     };
 
     // --- SUBMIT ACTION ---
@@ -340,7 +389,8 @@ export default function GamePage() {
         }
 
         return (
-            <div className="min-h-screen bg-gradient-to-b from-indigo-950 via-purple-950 to-black p-4 pb-24 relative overflow-hidden">
+            <div className={`min-h-screen bg-gradient-to-b from-indigo-950 via-purple-950 to-black p-4 pb-24 relative overflow-hidden ${(isDay && timeLeft < 10) ? 'shake-intense' : ''}`}>
+                <PhaseOverlay />
                 {/* Animated Starry Sky Background */}
                 <ParticleEffect type="stars" count={100} />
 
@@ -364,7 +414,10 @@ export default function GamePage() {
                                 </div>
 
                                 {/* Back (The Role) */}
-                                <div className="absolute inset-0 w-full h-full bg-zinc-900 rounded-2xl border-4 border-white shadow-[0_0_50px_rgba(99,102,241,0.3)] flex flex-col items-center justify-center rotate-y-180 backface-hidden p-6 text-center">
+                                <div className={`absolute inset-0 w-full h-full bg-zinc-900 rounded-2xl border-4 shadow-[0_0_50px_rgba(99,102,241,0.3)] flex flex-col items-center justify-center rotate-y-180 backface-hidden p-6 text-center ${myRole === 'werewolf' ? 'border-red-500 glow-werewolf' : (myRole === 'seer' ? 'border-indigo-400 glow-seer' : 'border-emerald-500 glow-villager')}`}>
+                                    {/* Reveal Sparkles */}
+                                    <ParticleEffect type="sparkles" count={30} />
+
                                     <h3 className="text-4xl font-black text-white uppercase tracking-tighter mb-4">{myRole}</h3>
                                     <p className="text-zinc-300 text-sm font-medium mb-4 max-w-[200px] mx-auto leading-snug shadow-black drop-shadow-md">
                                         {t(`desc_${myRole}` as any)}
@@ -465,7 +518,7 @@ export default function GamePage() {
                         </div>
                     </div>
 
-                    <div className={`flex flex-col items-center justify-center w-16 h-16 rounded-full border-4 transition-all duration-500 ${timeLeft < 10 ? 'border-red-500 text-red-500 animate-pulse' : 'border-indigo-500/30 text-indigo-400'}`}>
+                    <div className={`flex flex-col items-center justify-center w-16 h-16 rounded-full border-4 transition-all duration-500 ${timeLeft < 10 ? 'border-red-500 text-red-500 animate-pulse pulse-urgency scale-110 shadow-[0_0_20px_rgba(239,68,68,0.5)]' : 'border-indigo-500/30 text-indigo-400'}`}>
                         <span className="text-2xl font-black">{timeLeft}</span>
                         <span className="text-[8px] uppercase font-bold tracking-tighter -mt-1">{t('seconds')}</span>
                     </div>
@@ -524,7 +577,7 @@ export default function GamePage() {
                 </div>
 
                 {/* PLAYERS GRID */}
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-w-6xl mx-auto mb-8">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 max-w-6xl mx-auto mb-8">
                     {players
                         .filter((p: any) => p.id !== myPlayer.id && p.isAlive)
                         .map((p: any) => (
@@ -533,18 +586,26 @@ export default function GamePage() {
                                 variant={selectedTargets.includes(p.id) ? "default" : "outline"}
                                 className={`h-32 flex flex-col items-center justify-center border-zinc-800 transition-all ${selectedTargets.includes(p.id) ? 'bg-indigo-600 border-indigo-500' : 'bg-zinc-900/50'
                                     } ${myRole === "drunk" ? 'opacity-30 pointer-events-none' : ''}`} // Drunk can't pick players
-                                onClick={() => toggleTarget(p.id)}
+                                onClick={(e) => toggleTarget(p.id, e)}
                             >
-                                <span className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg mb-3 shadow-lg ${selectedTargets.includes(p.id) ? 'bg-white text-indigo-600' : 'bg-zinc-800 text-zinc-300'}`}>
+                                <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-xl">
+                                    {ripples.map(r => (
+                                        <span key={r.id} className="absolute bg-white/30 rounded-full animate-ripple" style={{ left: r.x, top: r.y, width: 20, height: 20, transform: 'translate(-50%, -50%)' }} />
+                                    ))}
+                                </div>
+                                <span className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center font-bold text-base md:text-lg mb-2 md:mb-3 shadow-lg ${selectedTargets.includes(p.id) ? 'bg-white text-indigo-600' : 'bg-zinc-800 text-zinc-300'}`}>
                                     {p.name.charAt(0).toUpperCase()}
                                 </span>
-                                <span className="font-semibold text-lg tracking-wide">{p.name}</span>
+                                <span className="font-semibold text-sm md:text-lg tracking-wide truncate max-w-[90%]">{p.name}</span>
                                 {myRole === "werewolf" && p.role === "werewolf" && (
                                     <span className="text-[10px] text-red-500 uppercase font-bold mt-1">{t('found_wolf')}</span>
                                 )}
                                 {/* Minion sees wolves? Wait, Minion doesn't ACT, so Minion is in passive screen. Wolves see wolves? Yes. */}
                                 {myRole === "werewolf" && players.find((x: any) => x.id === p.id && x.role === "werewolf") && (
-                                    <span className="text-[10px] text-red-500 uppercase font-bold mt-1">{t('teammate')}</span>
+                                    <>
+                                        <span className="text-[10px] text-red-500 uppercase font-bold mt-1">{t('teammate')}</span>
+                                        <div className="absolute inset-0 border-2 border-red-500/50 rounded-xl glow-werewolf pointer-events-none" />
+                                    </>
                                 )}
                             </Button>
                         ))}
@@ -564,8 +625,13 @@ export default function GamePage() {
                                     key={cid}
                                     variant="outline"
                                     className={`h-24 border-dashed border-2 ${selectedTargets.includes(cid) ? 'border-indigo-500 bg-indigo-500/20' : 'border-zinc-700 bg-transparent text-zinc-500'}`}
-                                    onClick={() => toggleTarget(cid)}
+                                    onClick={(e) => toggleTarget(cid, e)}
                                 >
+                                    <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-sm">
+                                        {ripples.map(r => (
+                                            <span key={r.id} className="absolute bg-white/20 rounded-full animate-ripple" style={{ left: r.x, top: r.y, width: 20, height: 20, transform: 'translate(-50%, -50%)' }} />
+                                        ))}
+                                    </div>
                                     <HelpCircle className="w-8 h-8" />
                                 </Button>
                             ))}
@@ -612,8 +678,9 @@ export default function GamePage() {
                                             </div>
 
                                             {/* Back (Revealed Content) */}
-                                            <div className="absolute inset-0 w-full h-full bg-zinc-900 rounded-xl border-4 border-white shadow-[0_0_30px_rgba(255,255,255,0.2)] backface-hidden rotate-y-180 flex flex-col items-center justify-center p-6 text-center">
-                                                <Eye className="w-16 h-16 text-emerald-400 mb-6" />
+                                            <div className="absolute inset-0 w-full h-full bg-zinc-900 rounded-xl border-4 border-white shadow-[0_0_30px_rgba(255,255,255,0.2)] backface-hidden rotate-y-180 flex flex-col items-center justify-center p-6 text-center glow-seer">
+                                                <ParticleEffect type="sparkles" count={20} />
+                                                <Eye className="w-16 h-16 text-emerald-400 mb-6 animate-pulse" />
                                                 <p className="text-xl font-bold text-white leading-snug">{revealedInfo}</p>
                                                 <p className="text-sm text-zinc-400 mt-4">Tap anywhere to close</p>
                                             </div>
@@ -645,7 +712,8 @@ export default function GamePage() {
     // 2. DAY VIEW (Voting)
     if (isDay) {
         return (
-            <div className="min-h-screen bg-gradient-to-b from-orange-200 via-yellow-100 to-orange-50 p-4 pb-24 text-zinc-900 relative overflow-hidden">
+            <div className={`min-h-screen bg-gradient-to-b from-orange-200 via-yellow-100 to-orange-50 p-4 pb-24 text-zinc-900 relative overflow-hidden ${timeLeft < 10 ? 'shake-intense' : ''}`}>
+                <PhaseOverlay />
                 {/* Animated Sun and Sun Rays */}
                 <div className="fixed top-10 left-1/2 -translate-x-1/2 w-32 h-32 bg-yellow-300 rounded-full blur-2xl opacity-40 animate-[breathe_3s_ease-in-out_infinite]" />
                 <div className="fixed top-10 left-1/2 -translate-x-1/2 w-24 h-24 bg-yellow-400 rounded-full opacity-60 animate-[pulse-glow_2s_ease-in-out_infinite]" />
@@ -662,7 +730,7 @@ export default function GamePage() {
                         </div>
                     </div>
 
-                    <div className={`flex flex-col items-center justify-center w-16 h-16 rounded-full border-4 transition-all duration-500 ${timeLeft < 10 ? 'border-red-500 text-red-500 animate-pulse' : 'border-indigo-500/30 text-indigo-400'}`}>
+                    <div className={`flex flex-col items-center justify-center w-16 h-16 rounded-full border-4 transition-all duration-500 ${timeLeft < 10 ? 'border-red-500 text-red-500 animate-pulse pulse-urgency scale-110 shadow-[0_0_20px_rgba(239,68,68,0.5)]' : 'border-indigo-500/30 text-indigo-400'}`}>
                         <span className="text-2xl font-black">{timeLeft}</span>
                         <span className="text-[8px] uppercase font-bold tracking-tighter -mt-1">SEC</span>
                     </div>
@@ -726,7 +794,7 @@ export default function GamePage() {
                         .map((p: any) => (
                             <div
                                 key={p.id}
-                                onClick={() => { if (!hasActed) { toggleTarget(p.id); } }}
+                                onClick={(e) => { if (!hasActed) { toggleTarget(p.id, e); } }}
                                 className={`p-4 rounded-xl border flex items-center justify-between transition-all cursor-pointer h-24 ${selectedTargets.includes(p.id)
                                     ? 'bg-red-900/30 border-red-500 ring-1 ring-red-500 shadow-[0_0_15px_rgba(239,68,68,0.2)]'
                                     : 'bg-zinc-800/40 border-zinc-700/50 hover:bg-zinc-800 hover:border-zinc-600'
