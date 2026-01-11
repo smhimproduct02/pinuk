@@ -59,10 +59,11 @@ export const SoundProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         if (audio && audio.src) {
             audio.currentTime = 0;
             audio.play().catch(e => {
-                console.warn(`[Sound] Error playing ${type}:`, e.message);
+                // Silently handle missing audio files
+                // Sound files should be placed in /public/sounds/ directory
+                // Expected files: click.mp3, join.mp3, wolf_howl.mp3, rooster.mp3, win.mp3, lose.mp3, reveal.mp3
             });
         }
-        console.log(`[Sound Action] ${type}`);
     }, [isMuted, audioMap]);
 
     const toggleMute = () => setIsMuted(prev => !prev);
