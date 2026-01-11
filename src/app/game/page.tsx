@@ -359,7 +359,78 @@ export default function GamePage() {
                                     <div className="w-24 h-24 bg-indigo-600 rounded-full flex items-center justify-center mb-6 shadow-lg">
                                         {myRole === "werewolf" ? <UserMinus className="w-12 h-12 text-white" /> : <Eye className="w-12 h-12 text-white" />}
                                     </div>
-                                    <Button className="mt-4 bg-zinc-800 hover:bg-zinc-700 text-white border-white/10" onClick={(e) => { e.stopPropagation(); setShowInitialRole(false); }}>
+
+                                    {/* Simple Instructions */}
+                                    <div className="bg-indigo-900/30 border border-indigo-500/30 p-3 rounded-lg mb-4 text-left max-w-[250px]">
+                                        <h4 className="text-xs font-black text-indigo-300 uppercase mb-2">📋 How to Play:</h4>
+                                        <ul className="text-[10px] text-zinc-300 space-y-1 leading-tight">
+                                            {myRole === "werewolf" && (
+                                                <>
+                                                    <li>• Find other werewolves</li>
+                                                    <li>• Pretend to be villager</li>
+                                                    <li>• Vote to eliminate a villager</li>
+                                                </>
+                                            )}
+                                            {myRole === "villager" && (
+                                                <>
+                                                    <li>• No special action at night</li>
+                                                    <li>• Discuss and find werewolves</li>
+                                                    <li>• Vote to eliminate werewolf</li>
+                                                </>
+                                            )}
+                                            {myRole === "seer" && (
+                                                <>
+                                                    <li>• Look at 1 player's card OR 2 center cards</li>
+                                                    <li>• Use this info to find werewolves</li>
+                                                    <li>• Don't reveal yourself too early!</li>
+                                                </>
+                                            )}
+                                            {myRole === "robber" && (
+                                                <>
+                                                    <li>• Swap cards with another player</li>
+                                                    <li>• You become their role</li>
+                                                    <li>• Use info wisely in discussion</li>
+                                                </>
+                                            )}
+                                            {myRole === "troublemaker" && (
+                                                <>
+                                                    <li>• Swap 2 other players' cards</li>
+                                                    <li>• They don't know they swapped</li>
+                                                    <li>• Create chaos!</li>
+                                                </>
+                                            )}
+                                            {myRole === "drunk" && (
+                                                <>
+                                                    <li>• Must swap with center card</li>
+                                                    <li>• Don't look at new role</li>
+                                                    <li>• You don't know what you are!</li>
+                                                </>
+                                            )}
+                                            {myRole === "minion" && (
+                                                <>
+                                                    <li>• Help werewolves win</li>
+                                                    <li>• You see who werewolves are</li>
+                                                    <li>• Protect them at all costs!</li>
+                                                </>
+                                            )}
+                                            {myRole === "tanner" && (
+                                                <>
+                                                    <li>• You want to be eliminated!</li>
+                                                    <li>• Act suspicious</li>
+                                                    <li>• If you die, you win alone</li>
+                                                </>
+                                            )}
+                                            {myRole === "insomniac" && (
+                                                <>
+                                                    <li>• Check your card at end of night</li>
+                                                    <li>• See if someone swapped you</li>
+                                                    <li>• You'll know your final role</li>
+                                                </>
+                                            )}
+                                        </ul>
+                                    </div>
+
+                                    <Button className="mt-2 bg-zinc-800 hover:bg-zinc-700 text-white border-white/10" onClick={(e) => { e.stopPropagation(); setShowInitialRole(false); }}>
                                         {t('continue')}
                                     </Button>
                                 </div>

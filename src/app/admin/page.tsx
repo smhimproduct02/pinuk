@@ -17,7 +17,7 @@ export default function AdminPage() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [password, setPassword] = useState("");
     const [errorInput, setErrorInput] = useState("");
-    const [timeLeft, setTimeLeft] = useState(30);
+    const [timeLeft, setTimeLeft] = useState(60);
     const [showSessions, setShowSessions] = useState(false);
 
     // Role Config State
@@ -98,7 +98,7 @@ export default function AdminPage() {
             const start = new Date(game.phaseStartedAt).getTime();
             const now = new Date().getTime();
             const diff = Math.floor((now - start) / 1000);
-            const remaining = Math.max(0, 30 - diff);
+            const remaining = Math.max(0, 60 - diff);
             setTimeLeft(remaining);
 
             // AUTO ADVANCE
