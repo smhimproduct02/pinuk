@@ -307,32 +307,6 @@ export default function GamePage() {
 
             return (
                 <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-4 text-center relative overflow-hidden">
-                    {/* INITIAL ROLE REVEAL OVERLAY (PASSIVE) */}
-                    {showInitialRole && (
-                        <div className="fixed inset-0 z-[60] bg-black flex flex-col items-center justify-center p-6 animate-in fade-in duration-500">
-                            <Moon className="w-12 h-12 text-indigo-500 mb-8 animate-pulse" />
-                            <h2 className="text-xl font-bold text-zinc-400 uppercase tracking-widest mb-12">Your Secret Role</h2>
-
-                            <div className="perspective-1000 group cursor-pointer" onClick={() => setShowInitialRole(false)}>
-                                <div className="relative w-64 h-96 transition-all duration-1000 transform-style-3d hover:rotate-y-180">
-                                    <div className="absolute inset-0 w-full h-full bg-zinc-800 rounded-2xl border-4 border-zinc-700 shadow-2xl flex flex-col items-center justify-center backface-hidden">
-                                        <Shuffle className="w-16 h-16 text-zinc-500" />
-                                        <p className="mt-8 text-zinc-500 font-bold tracking-tighter text-lg">TAP TO REVEAL</p>
-                                    </div>
-                                    <div className="absolute inset-0 w-full h-full bg-zinc-900 rounded-2xl border-4 border-white shadow-2xl flex flex-col items-center justify-center rotate-y-180 backface-hidden p-6 text-center">
-                                        <h3 className="text-4xl font-black text-white uppercase tracking-tighter mb-4">{myRole}</h3>
-                                        <div className="w-24 h-24 bg-zinc-700 rounded-full flex items-center justify-center mb-6">
-                                            <Moon className="w-12 h-12 text-white" />
-                                        </div>
-                                        <Button className="mt-4 bg-zinc-800 hover:bg-zinc-700 text-white border-white/10" onClick={(e) => { e.stopPropagation(); setShowInitialRole(false); }}>
-                                            Continue
-                                        </Button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
                     <Moon className="w-16 h-16 text-indigo-400 mb-4 animate-pulse" />
                     <h1 className="text-2xl font-bold text-zinc-200">{t('night_phase')}</h1>
                     <p className="text-zinc-500 mt-2 mb-8">
