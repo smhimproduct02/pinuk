@@ -91,6 +91,12 @@ export default function GamePage() {
         }
     }, [game?.phase, game?.status, game?.winner, playSound]);
 
+    // Define phase constants early (before useEffects that use them)
+    const myRole = myPlayer?.role;
+    const isNight = game?.phase === "night";
+    const isDay = game?.phase === "day";
+    const isMorning = game?.phase === "morning";
+
     // Reset state between phases (P0 FIX)
     useEffect(() => {
         if (game?.phase) {
@@ -147,11 +153,6 @@ export default function GamePage() {
     if (!data) return <div className="text-center p-10">Loading...</div>;
 
     if (!myPlayer) return <div>Player not found</div>;
-
-    const myRole = myPlayer.role;
-    const isNight = game.phase === "night";
-    const isDay = game.phase === "day";
-    const isMorning = game.phase === "morning";
 
     // Show Morning Report (P0 FIX)
     if (showMorningReport) {
