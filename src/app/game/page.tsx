@@ -11,6 +11,7 @@ import { useSound } from "@/contexts/SoundContext";
 import ParticleEffect from "@/components/ParticleEffect";
 import RoleCard from "@/components/RoleCard";
 import MorningReport from "@/components/MorningReport";
+import GameOver from "@/components/GameOver";
 import { useHaptic } from "@/hooks/useHaptic";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
@@ -90,6 +91,28 @@ export default function GamePage() {
         }
     }, [game?.phase, game?.status, game?.winner, playSound]);
 
+    // Reset state between phases (P0 FIX)
+    useEffect(() => {
+        if (game?.phase) {
+            setHasActed(false);
+            setRevealedInfo(null);
+            setSelectedTargets([]);
+        }
+    }, [game?.phase]);
+
+    // Track deaths for morning report (P0 FIX)
+    useEffect(() => {
+        if (isMorning && players.length > 0) {
+            const dead = players.filter((p: any) => !p.isAlive).map((p: any) => p.name);
+            setMorningDeaths(dead);
+            if (dead.length > 0 || true) { // Show even if no deaths
+                setShowMorningReport(true);
+            }
+        } else {
+            setShowMorningReport(false);
+        }
+    }, [isMorning, players]);
+
     // Timer Logic
     useEffect(() => {
         if (!game?.phaseStartedAt || game.status !== "playing") return;
@@ -129,6 +152,35 @@ export default function GamePage() {
     const isNight = game.phase === "night";
     const isDay = game.phase === "day";
     const isMorning = game.phase === "morning";
+
+    // Show Morning Report (P0 FIX)
+    if (showMorningReport) {
+        return (
+            <MorningReport
+                phase={game.phase}
+                deaths={morningDeaths}
+                onDismiss={() => setShowMorningReport(false)}
+            />
+        );
+    }
+
+    // Show Game Over Screen (P0 FIX)
+    if (game.status === "finished" && game.winner) {
+        return (
+            <GameOver
+                winner={game.winner as "villager" | "werewolf" | "tanner"}
+                players={players}
+                myPlayerId={playerId || ""}
+                onPlayAgain={myPlayer?.isHost ? () => {
+                    fetch("/api/admin/reset", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ gameId }),
+                    }).then(() => router.push("/admin"));
+                } : undefined}
+            />
+        );
+    }
 
 
     // --- DEAD VIEW ---

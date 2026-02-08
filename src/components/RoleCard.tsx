@@ -91,15 +91,11 @@ export default function RoleCard({ role, initialRole, phase }: RoleCardProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [hasSeenIntro, setHasSeenIntro] = useState(false);
 
-    // Show intro reveal on mount if night phase and haven't seen it
+    // Show intro reveal on mount if night phase and haven't seen it (P1 FIX: Manual dismiss only)
     useEffect(() => {
         if (phase === "night" && !hasSeenIntro) {
             setIsOpen(true);
-            const timer = setTimeout(() => {
-                setIsOpen(false);
-                setHasSeenIntro(true);
-            }, 5000); // Auto-close after 5s
-            return () => clearTimeout(timer);
+            setHasSeenIntro(true);
         }
     }, [phase, hasSeenIntro]);
 
