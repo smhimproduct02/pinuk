@@ -25,8 +25,12 @@ export async function POST(request: Request) {
             roomCode: newGame.shortId
         });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error("Create game error:", error);
-        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+        return NextResponse.json({
+            error: "Internal server error",
+            details: error.message,
+            stack: error.stack
+        }, { status: 500 });
     }
 }

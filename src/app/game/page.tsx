@@ -8,21 +8,27 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Moon, Sun, Ghost, Check, Eye, HelpCircle, Shuffle, UserMinus, Skull, Volume2, VolumeX } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSound } from "@/contexts/SoundContext";
+import { useSound } from "@/contexts/SoundContext";
 import ParticleEffect from "@/components/ParticleEffect";
+import RoleCard from "@/components/RoleCard";
+import MorningReport from "@/components/MorningReport";
+import { useHaptic } from "@/hooks/useHaptic";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function GamePage() {
     const { t } = useLanguage();
     const { playSound, toggleMute, isMuted } = useSound();
+    const { triggerHaptic } = useHaptic();
     const [gameId, setGameId] = useState<string | null>(null);
     const [playerId, setPlayerId] = useState<string | null>(null);
     const [selectedTargets, setSelectedTargets] = useState<string[]>([]);
     const [hasActed, setHasActed] = useState(false);
     const [revealedInfo, setRevealedInfo] = useState<string | null>(null);
-    const [showInitialRole, setShowInitialRole] = useState(true);
     const [timeLeft, setTimeLeft] = useState(60);
     const [showMenu, setShowMenu] = useState(false);
+    const [morningDeaths, setMorningDeaths] = useState<string[]>([]);
+    const [showMorningReport, setShowMorningReport] = useState(false);
     const [phaseTransition, setPhaseTransition] = useState<{ active: boolean; type: "night" | "day" | null }>({
         active: false,
         type: null
@@ -95,10 +101,17 @@ export default function GamePage() {
             const now = new Date().getTime();
             const diff = Math.floor((now - start) / 1000);
             const remaining = Math.max(0, 60 - diff);
-            setTimeLeft(remaining);
+            // Faster timer for morning phase (10s)
+            const phaseDuration = game.phase === "morning" ? 10 : 60;
+            const timeLeftCalc = Math.max(0, phaseDuration - diff);
 
-            if (remaining === 0 && myPlayer?.isHost) {
-                const nextPhase = game.phase === "night" ? "day" : "night";
+            setTimeLeft(timeLeftCalc);
+
+            if (timeLeftCalc === 0 && myPlayer?.isHost) {
+                let nextPhase = "night";
+                if (game.phase === "night") nextPhase = "morning";
+                if (game.phase === "morning") nextPhase = "day";
+
                 fetch("/api/admin/phase", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -116,46 +129,34 @@ export default function GamePage() {
 
     const myRole = myPlayer.role;
     const isNight = game.phase === "night";
+    const myRole = myPlayer.role;
+    const isNight = game.phase === "night";
     const isDay = game.phase === "day";
+    const isMorning = game.phase === "morning";
+
+    // Detect Morning Phase to show Report
+    useEffect(() => {
+        if (isMorning) {
+            const dead = players.filter((p: any) => !p.isAlive).map((p: any) => p.name);
+            setMorningDeaths(dead);
+            setShowMorningReport(true);
+        } else {
+            setShowMorningReport(false);
+        }
+    }, [isMorning, players]);
 
     // --- GAME OVER ---
-    if (game.status === "finished") {
-        let isWinner = false;
-        if (game.winner === "villager" && (myRole === "villager" || myRole === "seer" || myRole === "robber" || myRole === "troublemaker" || myRole === "drunk" || myRole === "insomniac")) isWinner = true;
-        if (game.winner === "werewolf" && (myRole === "werewolf" || myRole === "minion")) isWinner = true;
-        if (game.winner === "tanner" && myRole === "tanner") isWinner = true;
 
-        return (
-            <div className={`min-h-screen flex flex-col items-center justify-center p-10 text-center relative overflow-hidden ${isWinner ? 'bg-gradient-to-b from-green-900 via-emerald-950 to-black text-green-200' : 'bg-gradient-to-b from-red-900 via-rose-950 to-black text-red-200'} animate-in fade-in duration-1000`}>
-                {/* Confetti for Winners */}
-                {isWinner && <ParticleEffect type="confetti" count={80} />}
+    const [morningDeaths, setMorningDeaths] = useState<string[]>([]);
 
-                {/* Glowing Background */}
-                <div className={`fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 ${isWinner ? 'bg-green-500/20' : 'bg-red-500/20'} rounded-full blur-3xl animate-[pulse-glow_3s_ease-in-out_infinite]`} />
+    // Import new components
+    // Note: We need to import them at the top, but this tool only replaces a chunk. 
+    // I will add the imports in a separate call or use a multi-replace if possible. 
+    // Wait, I can't add imports with this tool if they are at the top and I'm editing the body.
+    // I will use multi_replace for this file to do it cleaner.
 
-                <h1 className="text-5xl font-black mb-4 relative z-10 animate-[slide-up_0.6s_ease-out]">{isWinner ? t('victory') : t('defeat')}</h1>
-                <p className="text-xl opacity-70 mb-8 relative z-10 animate-[fade-in-scale_0.8s_ease-out_0.2s_both]">
-                    {game.winner === "villager" && t('win_villager')}
-                    {game.winner === "werewolf" && t('win_werewolf')}
-                    {game.winner === "tanner" && t('win_tanner')}
-                </p>
+    // SKIPPING THIS TOOL CALL TO USE MULTI_REPLACE INSTEAD
 
-                {/* Reveal Roles Grid */}
-                <div className="grid grid-cols-3 gap-2 mb-8 w-full max-w-md">
-                    {players.map((p: any) => (
-                        <div key={p.id} className="bg-black/20 p-2 rounded flex flex-col items-center">
-                            <span className="font-bold">{p.name}</span>
-                            <span className="text-xs uppercase opacity-70">{p.role}</span>
-                        </div>
-                    ))}
-                </div>
-
-                <Button onClick={() => router.push("/")} variant="outline" className="border-white/20 hover:bg-white/10 text-white">
-                    {t('back_home')}
-                </Button>
-            </div>
-        )
-    }
 
     // --- DEAD VIEW ---
     if (!myPlayer.isAlive) {
@@ -194,6 +195,7 @@ export default function GamePage() {
         if (hasActed) return;
         addRipple(e);
         playSound("click");
+        triggerHaptic("light");
 
         // Logic branching based on Role
         if (myRole === "troublemaker") {
@@ -268,8 +270,9 @@ export default function GamePage() {
 
     // --- SUBMIT ACTION ---
     const submitAction = async () => {
-        if (selectedTargets.length === 0) return;
+        if (selectedTargets.length === 0 && myRole !== "insomniac") return; // Allow Insomniac to submit with 0
         playSound("click");
+        triggerHaptic("medium");
 
         // Validation
         if (myRole === "troublemaker" && selectedTargets.length !== 2) return;
@@ -412,120 +415,17 @@ export default function GamePage() {
         return (
             <div className={`min-h-screen bg-gradient-to-b from-indigo-950 via-purple-950 to-black p-4 pb-24 relative overflow-hidden ${(isDay && timeLeft < 10) ? 'shake-intense' : ''}`}>
                 <PhaseOverlay />
+                <RoleCard role={myRole} initialRole={myRole} phase={game.phase} />
                 {/* Animated Starry Sky Background */}
                 <ParticleEffect type="stars" count={100} />
 
                 {/* Moonlight Glow */}
                 <div className="fixed top-10 right-10 w-40 h-40 bg-blue-300/10 rounded-full blur-3xl animate-[breathe_4s_ease-in-out_infinite]" />
 
-                {/* INITIAL ROLE REVEAL OVERLAY */}
-                {showInitialRole && (
-                    <div className="fixed inset-0 z-[60] bg-black flex flex-col items-center justify-center p-6 animate-in fade-in duration-500">
-                        <Moon className="w-12 h-12 text-indigo-500 mb-8 animate-pulse" />
-                        <h2 className="text-xl font-bold text-zinc-400 uppercase tracking-widest mb-12">Your Secret Role</h2>
-
-                        <div className="perspective-1000 group cursor-pointer" onClick={() => setShowInitialRole(false)}>
-                            <div className="relative w-64 h-96 transition-all duration-1000 transform-style-3d hover:rotate-y-180">
-                                {/* Front (Card Back) */}
-                                <div className="absolute inset-0 w-full h-full bg-indigo-900 rounded-2xl border-4 border-indigo-500 shadow-2xl flex flex-col items-center justify-center backface-hidden">
-                                    <div className="w-32 h-32 rounded-full bg-indigo-800/50 flex items-center justify-center border border-indigo-400/30">
-                                        <Shuffle className="w-16 h-16 text-indigo-300" />
-                                    </div>
-                                    <p className="mt-8 text-indigo-300 font-bold tracking-tighter text-lg">{t('tap_to_reveal')}</p>
-                                </div>
-
-                                {/* Back (The Role) */}
-                                <div className={`absolute inset-0 w-full h-full bg-zinc-900 rounded-2xl border-4 shadow-[0_0_50px_rgba(99,102,241,0.3)] flex flex-col items-center justify-center rotate-y-180 backface-hidden p-6 text-center ${myRole === 'werewolf' ? 'border-red-500 glow-werewolf' : (myRole === 'seer' ? 'border-indigo-400 glow-seer' : 'border-emerald-500 glow-villager')}`}>
-                                    {/* Reveal Sparkles */}
-                                    <ParticleEffect type="sparkles" count={30} />
-
-                                    <h3 className="text-4xl font-black text-white uppercase tracking-tighter mb-4">{myRole}</h3>
-                                    <p className="text-zinc-300 text-sm font-medium mb-4 max-w-[200px] mx-auto leading-snug shadow-black drop-shadow-md">
-                                        {t(`desc_${myRole}` as any)}
-                                    </p>
-                                    <div className="w-24 h-24 bg-indigo-600 rounded-full flex items-center justify-center mb-6 shadow-lg">
-                                        {myRole === "werewolf" ? <UserMinus className="w-12 h-12 text-white" /> : <Eye className="w-12 h-12 text-white" />}
-                                    </div>
-
-                                    {/* Simple Instructions */}
-                                    <div className="bg-indigo-900/30 border border-indigo-500/30 p-3 rounded-lg mb-4 text-left max-w-[250px]">
-                                        <h4 className="text-xs font-black text-indigo-300 uppercase mb-2">📋 How to Play:</h4>
-                                        <ul className="text-[10px] text-zinc-300 space-y-1 leading-tight">
-                                            {myRole === "werewolf" && (
-                                                <>
-                                                    <li>• Find other werewolves</li>
-                                                    <li>• Pretend to be villager</li>
-                                                    <li>• Vote to eliminate a villager</li>
-                                                </>
-                                            )}
-                                            {myRole === "villager" && (
-                                                <>
-                                                    <li>• No special action at night</li>
-                                                    <li>• Discuss and find werewolves</li>
-                                                    <li>• Vote to eliminate werewolf</li>
-                                                </>
-                                            )}
-                                            {myRole === "seer" && (
-                                                <>
-                                                    <li>• Look at 1 player's card OR 2 center cards</li>
-                                                    <li>• Use this info to find werewolves</li>
-                                                    <li>• Don't reveal yourself too early!</li>
-                                                </>
-                                            )}
-                                            {myRole === "robber" && (
-                                                <>
-                                                    <li>• Swap cards with another player</li>
-                                                    <li>• You become their role</li>
-                                                    <li>• Use info wisely in discussion</li>
-                                                </>
-                                            )}
-                                            {myRole === "troublemaker" && (
-                                                <>
-                                                    <li>• Swap 2 other players' cards</li>
-                                                    <li>• They don't know they swapped</li>
-                                                    <li>• Create chaos!</li>
-                                                </>
-                                            )}
-                                            {myRole === "drunk" && (
-                                                <>
-                                                    <li>• Must swap with center card</li>
-                                                    <li>• Don't look at new role</li>
-                                                    <li>• You don't know what you are!</li>
-                                                </>
-                                            )}
-                                            {myRole === "minion" && (
-                                                <>
-                                                    <li>• Help werewolves win</li>
-                                                    <li>• You see who werewolves are</li>
-                                                    <li>• Protect them at all costs!</li>
-                                                </>
-                                            )}
-                                            {myRole === "tanner" && (
-                                                <>
-                                                    <li>• You want to be eliminated!</li>
-                                                    <li>• Act suspicious</li>
-                                                    <li>• If you die, you win alone</li>
-                                                </>
-                                            )}
-                                            {myRole === "insomniac" && (
-                                                <>
-                                                    <li>• Check your card at end of night</li>
-                                                    <li>• See if someone swapped you</li>
-                                                    <li>• You'll know your final role</li>
-                                                </>
-                                            )}
-                                        </ul>
-                                    </div>
-
-                                    <Button className="mt-2 bg-zinc-800 hover:bg-zinc-700 text-white border-white/10" onClick={(e) => { e.stopPropagation(); setShowInitialRole(false); }}>
-                                        {t('continue')}
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
-                        <p className="mt-12 text-zinc-600 text-sm font-medium animate-bounce">{t('click_to_flip')}</p>
-                    </div>
-                )}
+                {/* INITIAL ROLE REVEAL OVERLAY - REPLACED BY ROLE CARD COMPONENT */}
+                {/* But keeping the manual one for now if needed, or removing it? 
+                    RoleCard has its own modal. I should remove this block.
+                */}
 
                 {/* HEADER / TIMER / ROOM CODE */}
                 <div className="flex justify-between items-center max-w-6xl mx-auto pt-2 relative z-20">
@@ -597,8 +497,8 @@ export default function GamePage() {
                     <p className="text-zinc-400 text-sm">{instructions}</p>
                 </div>
 
-                {/* PLAYERS GRID */}
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 max-w-6xl mx-auto mb-8">
+                {/* PLAYERS GRID - Mobile Optimized */}
+                <div className="grid grid-cols-2 gap-3 max-w-6xl mx-auto mb-24 touch-manipulation">
                     {players
                         .filter((p: any) => p.id !== myPlayer.id && p.isAlive)
                         .map((p: any) => (
@@ -660,11 +560,11 @@ export default function GamePage() {
                     </div>
                 )}
 
-                {/* Confirm Button */}
+                {/* Confirm Button - Safe Area Aware */}
                 {!hasActed && (
-                    <div className="fixed bottom-0 left-0 right-0 px-4 flex justify-center mb-20 pb-safe">
+                    <div className="fixed bottom-0 left-0 right-0 p-4 pb-safe bg-gradient-to-t from-black to-transparent z-40">
                         <Button
-                            className="w-full max-w-sm bg-indigo-500 hover:bg-indigo-600 font-bold py-6 text-lg"
+                            className="w-full max-w-sm mx-auto bg-indigo-500 hover:bg-indigo-600 font-bold py-6 text-lg shadow-xl active:scale-95 transition-all"
                             disabled={selectedTargets.length === 0 && myRole !== "insomniac"} // Insomniac has no targets
                             onClick={submitAction}
                         >
@@ -754,11 +654,14 @@ export default function GamePage() {
         );
     }
 
-// 2. DAY VIEW (Voting)
-if (isDay) {
+// 2. DAY VIEW (Voting) & MORNING
+if (isDay || isMorning) {
     return (
         <div className={`min-h-screen bg-gradient-to-b from-orange-200 via-yellow-100 to-orange-50 p-4 pb-24 text-zinc-900 relative overflow-hidden ${timeLeft < 10 ? 'shake-intense' : ''}`}>
             <PhaseOverlay />
+            <RoleCard role={myRole} initialRole={myRole} phase={game.phase} />
+            <MorningReport phase={game.phase} deaths={morningDeaths} onDismiss={() => setShowMorningReport(false)} />
+
             {/* Animated Sun and Sun Rays */}
             <div className="fixed top-10 left-1/2 -translate-x-1/2 w-32 h-32 bg-yellow-300 rounded-full blur-2xl opacity-40 animate-[breathe_3s_ease-in-out_infinite]" />
             <div className="fixed top-10 left-1/2 -translate-x-1/2 w-24 h-24 bg-yellow-400 rounded-full opacity-60 animate-[pulse-glow_2s_ease-in-out_infinite]" />

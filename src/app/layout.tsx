@@ -34,6 +34,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  viewportFit: "cover", // Ensure full screen on notched devices
   themeColor: "#09090b",
 };
 
