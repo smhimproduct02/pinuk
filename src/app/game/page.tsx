@@ -80,7 +80,6 @@ export default function GamePage() {
 
                 if (currentPhase === "night") {
                     playSound("night_start");
-                    setShowInitialRole(true); // Reset for new night
                 }
                 if (currentPhase === "day") playSound("day_start");
                 if (game.status === "finished") {
