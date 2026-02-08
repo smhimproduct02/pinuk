@@ -8,7 +8,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Moon, Sun, Ghost, Check, Eye, HelpCircle, Shuffle, UserMinus, Skull, Volume2, VolumeX } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSound } from "@/contexts/SoundContext";
-import { useSound } from "@/contexts/SoundContext";
 import ParticleEffect from "@/components/ParticleEffect";
 import RoleCard from "@/components/RoleCard";
 import MorningReport from "@/components/MorningReport";
@@ -129,33 +128,8 @@ export default function GamePage() {
 
     const myRole = myPlayer.role;
     const isNight = game.phase === "night";
-    const myRole = myPlayer.role;
-    const isNight = game.phase === "night";
     const isDay = game.phase === "day";
     const isMorning = game.phase === "morning";
-
-    // Detect Morning Phase to show Report
-    useEffect(() => {
-        if (isMorning) {
-            const dead = players.filter((p: any) => !p.isAlive).map((p: any) => p.name);
-            setMorningDeaths(dead);
-            setShowMorningReport(true);
-        } else {
-            setShowMorningReport(false);
-        }
-    }, [isMorning, players]);
-
-    // --- GAME OVER ---
-
-    const [morningDeaths, setMorningDeaths] = useState<string[]>([]);
-
-    // Import new components
-    // Note: We need to import them at the top, but this tool only replaces a chunk. 
-    // I will add the imports in a separate call or use a multi-replace if possible. 
-    // Wait, I can't add imports with this tool if they are at the top and I'm editing the body.
-    // I will use multi_replace for this file to do it cleaner.
-
-    // SKIPPING THIS TOOL CALL TO USE MULTI_REPLACE INSTEAD
 
 
     // --- DEAD VIEW ---
