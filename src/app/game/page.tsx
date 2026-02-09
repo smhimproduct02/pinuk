@@ -14,6 +14,109 @@ import MorningReport from "@/components/MorningReport";
 import GameOver from "@/components/GameOver";
 import { useHaptic } from "@/hooks/useHaptic";
 
+// Role Theme System
+interface RoleTheme {
+    primaryColor: string;
+    secondaryColor: string;
+    glowColor: string;
+    particleType: "stars" | "sparkles" | "embers" | "snow" | "bubbles";
+    particleCount: number;
+    soundOnWake?: string;
+    flavorText: string;
+    icon: string;
+}
+
+const ROLE_THEMES: Record<string, RoleTheme> = {
+    werewolf: {
+        primaryColor: "text-red-500",
+        secondaryColor: "bg-red-900/20",
+        glowColor: "shadow-[0_0_30px_rgba(239,68,68,0.5)]",
+        particleType: "embers",
+        particleCount: 80,
+        soundOnWake: "night_start",
+        flavorText: "The pack awakens... You know your allies. Hunt together in the shadows.",
+        icon: "🐺"
+    },
+    seer: {
+        primaryColor: "text-purple-400",
+        secondaryColor: "bg-purple-900/20",
+        glowColor: "shadow-[0_0_30px_rgba(168,85,247,0.5)]",
+        particleType: "sparkles",
+        particleCount: 60,
+        soundOnWake: "day_start",
+        flavorText: "The veil parts before your mystical gaze... Choose wisely what you seek to know.",
+        icon: "👁️"
+    },
+    robber: {
+        primaryColor: "text-orange-400",
+        secondaryColor: "bg-orange-900/20",
+        glowColor: "shadow-[0_0_30px_rgba(251,146,60,0.5)]",
+        particleType: "embers",
+        particleCount: 40,
+        soundOnWake: "click",
+        flavorText: "In the darkness, identities blur... Whose life will you steal tonight?",
+        icon: "🎭"
+    },
+    troublemaker: {
+        primaryColor: "text-pink-400",
+        secondaryColor: "bg-pink-900/20",
+        glowColor: "shadow-[0_0_30px_rgba(244,114,182,0.5)]",
+        particleType: "sparkles",
+        particleCount: 70,
+        soundOnWake: "click",
+        flavorText: "Chaos is your art... Sow discord and watch the village crumble.",
+        icon: "🎪"
+    },
+    drunk: {
+        primaryColor: "text-yellow-400",
+        secondaryColor: "bg-yellow-900/20",
+        glowColor: "shadow-[0_0_30px_rgba(250,204,21,0.5)]",
+        particleType: "bubbles",
+        particleCount: 50,
+        soundOnWake: "click",
+        flavorText: "Too much ale... The cards spin before you. Choose one... or was it two?",
+        icon: "🍺"
+    },
+    insomniac: {
+        primaryColor: "text-teal-400",
+        secondaryColor: "bg-teal-900/20",
+        glowColor: "shadow-[0_0_30px_rgba(45,212,191,0.5)]",
+        particleType: "stars",
+        particleCount: 30,
+        soundOnWake: "night_start",
+        flavorText: "You toss and turn through the endless night... At dawn, will you still be who you were?",
+        icon: "💤"
+    },
+    minion: {
+        primaryColor: "text-purple-600",
+        secondaryColor: "bg-purple-950/40",
+        glowColor: "shadow-[0_0_30px_rgba(126,34,206,0.5)]",
+        particleType: "embers",
+        particleCount: 50,
+        soundOnWake: "night_start",
+        flavorText: "You are the shadow behind the throne... Protect your masters at all costs.",
+        icon: "🎭"
+    },
+    villager: {
+        primaryColor: "text-green-400",
+        secondaryColor: "bg-green-900/20",
+        glowColor: "shadow-[0_0_20px_rgba(74,222,128,0.3)]",
+        particleType: "stars",
+        particleCount: 40,
+        flavorText: "Sleep soundly, innocent soul... Tomorrow, only your wits can save you.",
+        icon: "👨"
+    },
+    tanner: {
+        primaryColor: "text-amber-500",
+        secondaryColor: "bg-amber-900/20",
+        glowColor: "shadow-[0_0_30px_rgba(245,158,11,0.5)]",
+        particleType: "embers",
+        particleCount: 60,
+        flavorText: "Death is your twisted victory... Convince them you're the greatest threat.",
+        icon: "🎯"
+    }
+};
+
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function GamePage() {
@@ -355,35 +458,120 @@ export default function GamePage() {
         // Roles with NO night action: Villager, Tanner, Minion targets nothing (just info)
         const passiveRoles = ["villager", "tanner", "minion"];
         if (passiveRoles.includes(myRole)) {
-            // Minion Special View: See Wolves
+            const theme = ROLE_THEMES[myRole] || ROLE_THEMES.villager;
             const wolves = players.filter((p: any) => p.role === "werewolf" && p.id !== myPlayer.id);
 
-            return (
-                <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-4 text-center relative overflow-hidden">
-                    <Moon className="w-16 h-16 text-indigo-400 mb-4 animate-pulse" />
-                    <h1 className="text-2xl font-bold text-zinc-200">{t('night_phase')}</h1>
-                    <p className="text-zinc-500 mt-2 mb-8">
-                        {myRole === "minion"
-                            ? t('help_wolves')
-                            : t('close_eyes')}
-                    </p>
+            // Enhanced passive role experiences
+            if (myRole === "villager") {
+                return (
+                    <div className="min-h-screen bg-gradient-to-b from-green-950/30 via-zinc-950 to-black flex flex-col items-center justify-center p-6 text-center relative overflow-hidden">
+                        <ParticleEffect type="stars" count={50} />
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(74,222,128,0.05)_0%,transparent_70%)]" />
 
-                    {myRole === "minion" && (
-                        <div className="bg-red-900/20 border border-red-500/30 p-4 rounded-lg">
-                            <h2 className="text-red-400 uppercase tracking-widest text-xs font-bold mb-2">Werewolves</h2>
-                            <div className="flex gap-4">
-                                {wolves.map((w: any) => (
-                                    <div key={w.id} className="flex flex-col items-center">
-                                        <div className="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center text-white font-bold">W</div>
-                                        <span className="text-xs mt-1 text-red-200">{w.name}</span>
-                                    </div>
-                                ))}
-                                {wolves.length === 0 && <span className="text-zinc-500 text-sm">{t('no_wolves')}</span>}
+                        <div className="relative z-10 max-w-2xl">
+                            <div className="text-6xl mb-6 animate-in zoom-in duration-500">{theme.icon}</div>
+                            <h1 className={`text-3xl font-black uppercase tracking-wider ${theme.primaryColor} mb-4 ${theme.glowColor}`}>
+                                {t('peaceful_slumber')}
+                            </h1>
+                            <p className="text-zinc-400 text-lg mb-8 font-serif italic border-l-4 border-green-900/50 pl-4">"{theme.flavorText}"</p>
+
+                            <div className={`${theme.secondaryColor} border border-green-500/20 rounded-xl p-6 backdrop-blur-sm animate-in slide-in-from-bottom duration-700 delay-500`}>
+                                <h3 className="text-green-400 font-bold uppercase tracking-widest text-sm mb-4">💡 Strategic Tips</h3>
+                                <div className="space-y-3 text-left text-zinc-300 text-sm">
+                                    <p className="animate-in fade-in duration-500 delay-700">• Listen carefully during discussions - spot inconsistencies</p>
+                                    <p className="animate-in fade-in duration-500 delay-1000">• Watch who accuses whom - wolves often turn on each other</p>
+                                    <p className="animate-in fade-in duration-500 delay-[1300ms]">• Trust your instincts but verify with logic</p>
+                                </div>
+                            </div>
+
+                            <div className="mt-6 flex items-center justify-center gap-2 text-zinc-600 text-xs">
+                                <Moon className="w-4 h-4 animate-pulse" />
+                                <span>Waiting for dawn...</span>
                             </div>
                         </div>
-                    )}
-                </div>
-            );
+                    </div>
+                );
+            }
+
+            if (myRole === "tanner") {
+                return (
+                    <div className="min-h-screen bg-gradient-to-b from-amber-950/30 via-zinc-950 to-black flex flex-col items-center justify-center p-6 text-center relative overflow-hidden">
+                        <ParticleEffect type="embers" count={60} />
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(245,158,11,0.08)_0%,transparent_70%)]" />
+
+                        <div className="relative z-10 max-w-2xl">
+                            <div className="text-6xl mb-6 animate-in zoom-in duration-500">{theme.icon}</div>
+                            <h1 className={`text-3xl font-black uppercase tracking-wider ${theme.primaryColor} mb-4 ${theme.glowColor}`}>
+                                {t('embrace_chaos')}
+                            </h1>
+                            <p className="text-zinc-400 text-lg mb-8 font-serif italic border-l-4 border-amber-900/50 pl-4">"{theme.flavorText}"</p>
+
+                            <div className={`${theme.secondaryColor} border border-amber-500/20 rounded-xl p-6 backdrop-blur-sm animate-in slide-in-from-bottom duration-700 delay-500`}>
+                                <h3 className="text-amber-400 font-bold uppercase tracking-widest text-sm mb-4">🎯 How to Win</h3>
+                                <div className="space-y-3 text-left text-zinc-300 text-sm">
+                                    <p className="animate-in fade-in duration-500 delay-700">• Act suspicious - make others doubt you</p>
+                                    <p className="animate-in fade-in duration-500 delay-1000">• Claim to be a werewolf (but not too obviously)</p>
+                                    <p className="animate-in fade-in duration-500 delay-[1300ms]">• Get voted out = YOU WIN!</p>
+                                </div>
+                            </div>
+
+                            <div className="mt-6 text-amber-600/60 text-xs uppercase tracking-wider font-bold">
+                                Victory awaits in defeat
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (myRole === "minion") {
+                return (
+                    <div className="min-h-screen bg-gradient-to-b from-purple-950/30 via-zinc-950 to-black flex flex-col items-center justify-center p-6 text-center relative overflow-hidden">
+                        <ParticleEffect type="embers" count={50} />
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(126,34,206,0.08)_0%,transparent_70%)]" />
+
+                        <div className="relative z-10 max-w-2xl">
+                            <div className="text-6xl mb-6 animate-in zoom-in duration-500">{theme.icon}</div>
+                            <h1 className={`text-3xl font-black uppercase tracking-wider ${theme.primaryColor} mb-4 ${theme.glowColor}`}>
+                                {t('loyal_servant')}
+                            </h1>
+                            <p className="text-zinc-400 text-lg mb-8 font-serif italic border-l-4 border-purple-900/50 pl-4">"{theme.flavorText}"</p>
+
+                            {wolves.length > 0 && (
+                                <div className="bg-red-950/30 border-2 border-red-500/30 rounded-xl p-6 mb-6 animate-in slide-in-from-top duration-700">
+                                    <h3 className="text-red-400 font-bold uppercase tracking-widest text-sm mb-4">🐺 Your Masters</h3>
+                                    <div className="flex gap-6 justify-center">
+                                        {wolves.map((w: any, i: number) => (
+                                            <div key={w.id} className={`flex flex-col items-center animate-in zoom-in duration-500 delay-${(i + 3) * 200}`}>
+                                                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-red-900/50 animate-pulse">
+                                                    🐺
+                                                </div>
+                                                <span className="text-sm mt-2 text-red-200 font-bold">{w.name}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {wolves.length === 0 && (
+                                <div className="bg-zinc-900/40 border border-zinc-700/30 rounded-xl p-6 mb-6">
+                                    <p className="text-zinc-500 text-sm">{t('no_wolves')} - Serve the darkness alone.</p>
+                                </div>
+                            )}
+
+                            <div className={`${theme.secondaryColor} border border-purple-500/20 rounded-xl p-6 backdrop-blur-sm animate-in slide-in-from-bottom duration-700 delay-1000`}>
+                                <h3 className="text-purple-400 font-bold uppercase tracking-widest text-sm mb-4">🎭 Your Mission</h3>
+                                <div className="space-y-3 text-left text-zinc-300 text-sm">
+                                    <p>• Protect the werewolves' identities</p>
+                                    <p>• Deflect suspicion away from them</p>
+                                    <p>• Win if werewolves win (even if you die)</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            return null;
         }
 
         // Active Roles
@@ -416,8 +604,14 @@ export default function GamePage() {
             <div className={`min-h-screen bg-gradient-to-b from-indigo-950 via-purple-950 to-black p-4 pb-24 relative overflow-hidden ${(isDay && timeLeft < 10) ? 'shake-intense' : ''}`}>
                 <PhaseOverlay />
                 <RoleCard role={myRole} initialRole={myRole} phase={game.phase} />
-                {/* Animated Starry Sky Background */}
-                <ParticleEffect type="stars" count={100} />
+                {/* Role-Specific Particles */}
+                {(() => {
+                    const theme = ROLE_THEMES[myRole];
+                    if (theme) {
+                        return <ParticleEffect type={theme.particleType} count={theme.particleCount} />;
+                    }
+                    return <ParticleEffect type="stars" count={100} />;
+                })()}
 
                 {/* Moonlight Glow */}
                 <div className="fixed top-10 right-10 w-40 h-40 bg-blue-300/10 rounded-full blur-3xl animate-[breathe_4s_ease-in-out_infinite]" />
@@ -491,10 +685,31 @@ export default function GamePage() {
                     </div>
                 )}
 
-                <div className="text-center mb-8 mt-4">
-                    <Moon className="w-10 h-10 mx-auto text-indigo-500 mb-2" />
-                    <h1 className="text-xl font-bold text-indigo-200 uppercase tracking-widest">{myRole} Phase</h1>
-                    <p className="text-zinc-400 text-sm">{instructions}</p>
+                <div className="text-center mb-8 mt-4 relative z-10">
+                    {(() => {
+                        const theme = ROLE_THEMES[myRole];
+                        if (theme) {
+                            return (
+                                <>
+                                    <div className="text-5xl mb-3 animate-in zoom-in duration-500">{theme.icon}</div>
+                                    <h1 className={`text-2xl font-black uppercase tracking-wider ${theme.primaryColor} ${theme.glowColor} mb-2`}>
+                                        {myRole} Phase
+                                    </h1>
+                                    <p className="text-zinc-400 text-sm mb-4">{instructions}</p>
+                                    <p className="text-zinc-500 text-xs italic max-w-md mx-auto border-l-4 border-indigo-900/30 pl-3 py-1">
+                                        "{theme.flavorText}"
+                                    </p>
+                                </>
+                            );
+                        }
+                        return (
+                            <>
+                                <Moon className="w-10 h-10 mx-auto text-indigo-500 mb-2" />
+                                <h1 className="text-xl font-bold text-indigo-200 uppercase tracking-widest">{myRole} Phase</h1>
+                                <p className="text-zinc-400 text-sm">{instructions}</p>
+                            </>
+                        );
+                    })()}
                 </div>
 
                 {/* PLAYERS GRID - Mobile Optimized */}
