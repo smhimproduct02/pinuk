@@ -471,7 +471,7 @@ export default function GamePage() {
                         <div className="relative z-10 max-w-2xl">
                             <div className="text-6xl mb-6 animate-in zoom-in duration-500">{theme.icon}</div>
                             <h1 className={`text-3xl font-black uppercase tracking-wider ${theme.primaryColor} mb-4 ${theme.glowColor}`}>
-                                {t('peaceful_slumber')}
+                                Peaceful Slumber
                             </h1>
                             <p className="text-zinc-400 text-lg mb-8 font-serif italic border-l-4 border-green-900/50 pl-4">"{theme.flavorText}"</p>
 
@@ -502,7 +502,7 @@ export default function GamePage() {
                         <div className="relative z-10 max-w-2xl">
                             <div className="text-6xl mb-6 animate-in zoom-in duration-500">{theme.icon}</div>
                             <h1 className={`text-3xl font-black uppercase tracking-wider ${theme.primaryColor} mb-4 ${theme.glowColor}`}>
-                                {t('embrace_chaos')}
+                                Embrace Chaos
                             </h1>
                             <p className="text-zinc-400 text-lg mb-8 font-serif italic border-l-4 border-amber-900/50 pl-4">"{theme.flavorText}"</p>
 
@@ -532,7 +532,7 @@ export default function GamePage() {
                         <div className="relative z-10 max-w-2xl">
                             <div className="text-6xl mb-6 animate-in zoom-in duration-500">{theme.icon}</div>
                             <h1 className={`text-3xl font-black uppercase tracking-wider ${theme.primaryColor} mb-4 ${theme.glowColor}`}>
-                                {t('loyal_servant')}
+                                Loyal Servant
                             </h1>
                             <p className="text-zinc-400 text-lg mb-8 font-serif italic border-l-4 border-purple-900/50 pl-4">"{theme.flavorText}"</p>
 
